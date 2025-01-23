@@ -43,23 +43,36 @@
       "pinDigests": false
     },
     {
+      "description": "Java dependencies - Major updates",
       "matchManagers": [
-        "gradle"
-      ],
-      "addLabels": [
-        "java",
-        "dependencies"
-      ]
-    },
-    {
-      "description": "Maven dependencies",
-      "matchManagers": [
+        "gradle",
         "maven"
       ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "addLabels": [
+        "java",
+        "dependencies",
+        "major-update"
+      ],
+      "groupName": "java major"
+    },
+    {
+      "description": "Java dependencies - Non-major updates",
+      "matchManagers": [
+        "gradle",
+        "maven"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "addLabels": [
         "java",
         "dependencies"
-      ]
+      ],
+      "groupName": "java non-major"
     },
     {
       "description": "Apache Maven plugins",

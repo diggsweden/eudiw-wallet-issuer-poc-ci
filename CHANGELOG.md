@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.1/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8] - 2025-01-23
+
+### Changed
+- V0.0.7
+
+### Removed
+- Remove hard coded urls
+
 ## [0.0.7] - 2025-01-18
 
 ### Added
@@ -94,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update zxing to v3.5.3
 - Update spring non-major
 
+[0.0.8]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.7..v0.0.8
 [0.0.7]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.6..v0.0.7
 [0.0.6]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.5..v0.0.6
 [0.0.5]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.4..v0.0.5

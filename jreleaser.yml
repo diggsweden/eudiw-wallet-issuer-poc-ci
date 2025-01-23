@@ -17,12 +17,11 @@ release:
   github:
     owner: diggsweden
     overwrite: true     # Allows updating existing releases
-    draft: true        # Creates as final release, not draft
+    draft: false        # Creates as final release, not draft
     sign: true          # Signs release assets
     branch: main
     changelog:
-      enabled: true
-      external: CHANGELOG.md
+      external: ReleasenotesTmp
 
 checksum:
   algorithms:

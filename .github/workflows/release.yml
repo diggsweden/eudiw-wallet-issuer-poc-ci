@@ -6,6 +6,9 @@ name: Release And Publish
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -37,6 +40,7 @@ jobs:
           passphrase: ${{ secrets.OSPO_BOT_GPG_PASS }}
           git_user_signingkey: true
           git_commit_gpgsign: true 
+          git_config_global: true
 
       - name: Release with JReleaser
         env:

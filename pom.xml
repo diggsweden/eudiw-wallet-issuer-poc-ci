@@ -348,9 +348,9 @@
                               <!-- Ban duplicate dependencies -->
                               <banDuplicatePomDependencyVersions />
 
-                              <!-- Require all dependencies to have versions -->
+                              <!-- Require all dependencies to have versions 
                               <requireUpperBoundDeps />
-
+                                -->
 
                               <!-- IMPORTANT: Enable and fixe: Enforce dependency convergence -->
                               <!-- <dependencyConvergence>

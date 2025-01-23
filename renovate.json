@@ -62,6 +62,13 @@
       ]
     },
     {
+      "description": "Apache Maven plugins",
+      "groupName": "maven-plugins",
+      "matchPackagePatterns": [
+        "^org\\.apache\\.maven\\.plugins:"
+      ]
+    },
+    {
       "description": "Spring dependencies - Major updates",
       "groupName": "spring major",
       "matchUpdateTypes": [

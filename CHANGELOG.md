@@ -2,50 +2,77 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.1/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.0.9] - 2025-01-23
+
+### Changed
+
+- Restore releaseTmp note
+- Restore jar artifact
+- Update github actions
+- Migrate renovate config
+- Update orhun/git-cliff-action action to v4
+- Group java deps
+- Improve release flow
+- V0.0.8
+
+### Removed
+
+- Remove gradle
 
 ## [0.0.8] - 2025-01-23
 
 ### Changed
+
 - V0.0.7
 
 ### Removed
-- Remove hard coded urls
+
+- Remove hard coded urls (#55)
 
 ## [0.0.7] - 2025-01-18
 
 ### Added
+
 - Add refresh of main branch
 
 ### Changed
+
 - V0.0.6
 
 ## [0.0.6] - 2025-01-18
 
 ### Added
+
 - Add tok for bot
 
 ### Changed
+
 - V0.0.5
 
 ## [0.0.5] - 2025-01-16
 
 ### Changed
+
 - Resolve wallet instance from oidfederation with clientid
 - V0.0.4
 
 ## [0.0.4] - 2025-01-16
 
 ### Changed
+
 - V0.0.3
 
 ### Fixed
+
 - Fix types in var
 
 ## [0.0.3] - 2025-01-15
 
 ### Changed
+
 - Update dependency org.apache.maven.plugins:maven-enforcer-plugin to v3.5.0
 - Update dependency org.apache.maven.plugins:maven-failsafe-plugin to v3.5.2
 - Update dependency org.apache.maven.plugins:maven-source-plugin to v3.3.1
@@ -58,16 +85,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - V0.0.2
 
 ### Fixed
+
 - Update dependency org.bouncycastle:bcprov-jdk18on to v1.80
 - Correct typo
 
 ## [0.0.2] - 2025-01-15
 
 ### Added
+
 - Add work-around in order to handle a bug in openapi gen lib when multiple Accept types
 - Add mvn build deps and fix test application.yml
 - Add maven package repository for poc lib
-- Add mvn support
+- Add mvn support (#21)
 - Add par authorization endpoint
 - Add pre-auth code flow"
 - Add working oidfed metadata and wip add jwk to issued credential
@@ -76,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add oid federation rest client
 
 ### Changed
+
 - Improve workflows and friends
 - Update cgr.dev/chainguard/jre:latest docker digest to fba813a
 - Update plugin org.openapi.generator to v7.10.0
@@ -84,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change configured host in dev profile to https://local.dev.swedenconnect.se:8443
 
 ### Fixed
+
 - Correct release vars
 - Make test run with bogus cert
 - Update spring non-major
@@ -92,16 +123,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.1] - 2024-11-22
 
 ### Added
+
 - Add ci,image,renovate,etc
 
 ### Changed
+
 - Chore: cleanup and add workflow.
 - Initial commit
 
 ### Fixed
+
 - Update zxing to v3.5.3
 - Update spring non-major
 
+[0.0.9]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.8..v0.0.9
 [0.0.8]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.7..v0.0.8
 [0.0.7]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.6..v0.0.7
 [0.0.6]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.5..v0.0.6

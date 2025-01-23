@@ -20,7 +20,6 @@ readonly CHECKMARK=$'\xE2\x9C\x94'
 readonly MISSING=$'\xE2\x9D\x8C'
 
 #MAVEN OPTS
-# TODO Gradle vers
 #readonly MAVEN_CLI_OPTS=(--batch-mode --no-transfer-progress --errors --fail-at-end -Dstyle.color=always -DinstallAtEnd=true -DdeployAtEnd=true)
 
 is_command_available() {
@@ -119,8 +118,8 @@ is_command_available 'npm' 'https://nodejs.org/'
 is_command_available 'sed' ''
 
 lint
-# format TODO Gradle vers
+#format
 commit
-# coverage TODO Gradle vers
+#coverage 
 
 check_exit_codes

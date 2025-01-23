@@ -31,7 +31,7 @@ or set it with environment variable `EUDIW_ISSUER_SIGNER_KEY_PEM_FILE=issuer-jwt
 ### command line
 
 ```shell
-SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run
 ```
 
 ### docker-compose

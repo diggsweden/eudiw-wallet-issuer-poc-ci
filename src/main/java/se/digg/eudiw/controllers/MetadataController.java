@@ -20,13 +20,16 @@ import org.springframework.web.bind.annotation.RestController;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.config.SignerConfig;
 import se.digg.eudiw.service.OpenIdFederationService;
-import se.digg.wallet.metadata.*;
 import se.oidc.oidfed.base.data.LanguageObject;
 import se.oidc.oidfed.base.data.federation.EntityMetadataInfoClaim;
 import se.oidc.oidfed.base.data.federation.EntityStatement;
 import se.oidc.oidfed.base.data.federation.EntityStatementDefinedParams;
 import se.oidc.oidfed.base.data.federation.TrustMarkClaim;
 import se.oidc.oidfed.base.data.metadata.FederationEntityMetadata;
+import se.oidc.oidfed.md.wallet.credentialissuer.*;
+import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.bundle.CredentialBundles;
+import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
 @RestController
 public class MetadataController {
@@ -35,18 +38,21 @@ public class MetadataController {
     private final OpenIdFederationService openIdFederationService;
     private final SignerConfig signer;
     private final EudiwConfig eudiwConfig;
+    private final CredentialBundles credentialBundles;
 
     Logger logger = LoggerFactory.getLogger(MetadataController.class);
 
-    public MetadataController(@Autowired EudiwConfig eudiwConfig, @Autowired OpenIdFederationService openIdFederationService, @Autowired SignerConfig signer) {
+    public MetadataController(@Autowired EudiwConfig eudiwConfig, @Autowired OpenIdFederationService openIdFederationService, @Autowired SignerConfig signer, @Autowired CredentialBundles credentialBundles) {
         this.openIdFederationService = openIdFederationService;
         this.signer = signer;
         this.eudiwConfig = eudiwConfig;
+        this.credentialBundles = credentialBundles;
     }
 
     @GetMapping("/.well-known/jwks.json")
     Map<String, Object> jwks() {
-        return new JWKSet(signer.getPublicJwk()).toJSONObject();
+        final PkiCredential issuerCredential = credentialBundles.getCredential("issuercredential");
+        return new JwkTransformerFunction().apply(issuerCredential).toJSONObject();
     }
 
     @GetMapping("/.well-known/openid-credential-issuer")
@@ -59,11 +65,20 @@ public class MetadataController {
                 .notificationEndpoint(String.format("%s/notification", eudiwConfig.getCredentialHost()))
                 //.batchCredentialIssuance(new BatchCredentialIssuance(100))
                 .signedMetadata("signed_metadata_jwt")
-                .display(Display.builder()
-                        .name("Credential Issuer Name")
-                        .locale("en")
-                        .logo(new Display.Image("https://example.com/logo", "Logo"))
-                        .build())
+                .display(List.of(
+                        Display.builder()
+                                .name("DIGG PID issuer")
+                                .locale("en")
+                                .build(),
+                        Display.builder()
+                                .name("DIGG PID utfärdare")
+                                .locale("sv")
+                                .build(),
+                        Display.builder()
+                                .name("DIGG PID aussteller")
+                                .locale("de")
+                                .build()
+                ))
                 .credentialConfiguration("VerifiablePortableDocumentA1", SdJwtCredentialConfiguration.builder()
                         .format("vc+sd-jwt")
                         .scope("VerifiablePortableDocumentA1")
@@ -72,8 +87,18 @@ public class MetadataController {
                         .proofType("jwt", ProofTypeWrapper.createProofType(List.of("ES256")))                        
                         .display(List.of(
                                 Display.builder()
-                                        .name("DIGG PID Issuer")
-                                        .build()))
+                                        .name("DIGG PID")
+                                        .locale("en")
+                                        .build(),
+                                Display.builder()
+                                        .name("DIGG PID")
+                                        .locale("sv")
+                                        .build(),
+                                Display.builder()
+                                        .name("DIGG PID")
+                                        .locale("de")
+                                        .build()
+                        ))
                         .vct("VerifiablePortableDocumentA1")
                         .claim("given_name", Claim.builder()
                                 .mandatory(true)
@@ -124,6 +149,8 @@ public class MetadataController {
         Calendar expCalendar = Calendar.getInstance();
         expCalendar.setTime(issCalendar.getTime());
         expCalendar.add(Calendar.HOUR_OF_DAY, 24); // todo config
+
+        final PkiCredential issuerCredential = credentialBundles.getCredential("issuercredential");
 
         try {
             final EntityStatementDefinedParams definedParams =

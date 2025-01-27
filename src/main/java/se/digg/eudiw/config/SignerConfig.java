@@ -3,6 +3,7 @@ package se.digg.eudiw.config;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.crypto.ECDSAVerifier;
+import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import lombok.Getter;
@@ -14,6 +15,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import se.oidc.oidfed.base.security.JWTSigningCredential;
+import se.swedenconnect.security.credential.BasicCredential;
+import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.bundle.CredentialBundles;
+import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
 import java.nio.file.Files;
 
@@ -21,11 +26,11 @@ import java.nio.file.Paths;
 import java.security.Security;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
+import java.util.Set;
 
 @Component
 public class SignerConfig {
 
-private ResourceLoader resourceLoader;
     Logger logger = LoggerFactory.getLogger(SignerConfig.class);
 
     private final JWSSigner jwsSigner;
@@ -37,26 +42,20 @@ private ResourceLoader resourceLoader;
 
     private final JWK jwk;
 
-    public SignerConfig(@Autowired EudiwConfig eudiwConfig, @Autowired ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
+    public SignerConfig(@Autowired CredentialBundles credentialBundles) {
         try {
             // Load BouncyCastle as JCA provider
             Security.addProvider(new BouncyCastleProvider());
 
+            final PkiCredential issuerCredential = credentialBundles.getCredential("issuercredential");
 
-// Then in your method:
-Resource resource = resourceLoader.getResource(eudiwConfig.getIssuerSignerKeyPemFile());
-String pemKey = new String(resource.getInputStream().readAllBytes());           // Parse the EC key file
-            JWK parsedJwk = JWK.parseFromPEMEncodedObjects(pemKey);
-            ECKey ecKey = parsedJwk.toECKey();
-            ECPrivateKey privateKey = ecKey.toECPrivateKey();
-            ECPublicKey publicKey = ecKey.toECPublicKey();
+            jwk = new JwkTransformerFunction().apply(issuerCredential);
 
-            jwk = new ECKey.Builder(ecKey).keyIDFromThumbprint().build();
-            jwsSigner = new ECDSASigner(privateKey);
-            jwsVerifier = new ECDSAVerifier(publicKey);
+            jwsSigner = new ECDSASigner(issuerCredential.getPrivateKey(), Curve.P_256);
+            jwsVerifier = new ECDSAVerifier(jwk.toPublicJWK().toECKey().toECPublicKey(), Set.of(Curve.P_256.getName()));
 
             jwtSigningCredential = JWTSigningCredential.builder().signer(jwsSigner).verifier(jwsVerifier).supportedAlgorithms(jwsSigner.supportedJWSAlgorithms().stream().toList()).build();
+
         } catch (Exception e) {
             logger.error("Could not initialize signer configuration", e);
             throw new RuntimeException(e);

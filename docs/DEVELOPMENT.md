@@ -1,30 +1,42 @@
 # Development Guide Lines
 
-## Signer certificate
+## Issuer signer certificate
 
-JWTs are signed with a private key.
-
-Generate key
-```shell
-openssl ecparam -genkey -name prime256v1 -noout -out issuer-jwt-ec256-key-pair.pem
+Generate private key in PKCS#8 format
+```
+openssl genpkey -algorithm EC \
+-pkeyopt ec_paramgen_curve:prime256v1 \
+-out issuer_private_pkcs8.key
 ```
 
-Generate corresponding public key
-```shell
-openssl ec -in issuer-jwt-ec256-key-pair.pem -pubout -out issuer-jwt-ec256-public-key.pem
+Extract public key
+```
+openssl pkey -in issuer_private_pkcs8.key -pubout -out issuer_public.key
 ```
 
-Self signed certificate public key
-```shell
-openssl req -new -x509 -key issuer-jwt-ec256-key-pair.pem -out issuer-jwt-ec256-public-key.crt -days 360
-
+Create self-signed certificate using PKCS#8 key
 ```
+openssl req -new -x509 \
+-key issuer_private_pkcs8.key \
+-out issuer-certificate.crt \
+-days 365 \
+-subj "/CN=local.dev.swedenconnect.se"
+```
+
 
 Make sure application.properties in the active profile has proper key pair config
-```shell
-eudiw.issuerSignerKeyPemFile: issuer-jwt-ec256-key-pair.pem
+```yaml
+credential:
+  bundles:
+    pem:
+      issuercredential:
+        private-key: file:./keystores/issuer_private_pkcs8.key
+        certificates: file:./keystores/issuer-certificate.crt
+        name: "Issuer credential"
+  bundle:
+    monitoring:
+      health-endpoint-enabled: true
 ```
-or set it with environment variable `EUDIW_ISSUER_SIGNER_KEY_PEM_FILE=issuer-jwt-ec256-key-pair.pem`
 
 ## Start the server
 
@@ -67,7 +79,7 @@ Example:
 
 ```shell
 git tag -s v0.0.32 -m 'v0.0.32'
-git push origin 
+git push origin tag v0.0.32
 ```
 
 (Currently a gh-workflow and image release flow with act on Tag pushes.

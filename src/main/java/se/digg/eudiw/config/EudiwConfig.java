@@ -3,6 +3,7 @@ package se.digg.eudiw.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import se.swedenconnect.security.credential.config.properties.PemCredentialConfigurationProperties;
 
 import java.util.List;
 
@@ -41,8 +42,6 @@ public class EudiwConfig {
     private SwedenConnectConfiguration swedenconnect;
 
     private ValKeyConfig valkey;
-
-    private String issuerSignerKeyPemFile;
 
     public String getAuthHost() {
         return authHost;
@@ -125,14 +124,6 @@ public class EudiwConfig {
         this.swedenconnect = swedenconnect;
     }
 
-    public String getIssuerSignerKeyPemFile() {
-        return issuerSignerKeyPemFile;
-    }
-
-    public void setIssuerSignerKeyPemFile(String issuerSignerKeyPemFile) {
-        this.issuerSignerKeyPemFile = issuerSignerKeyPemFile;
-    }
-
     public ValKeyConfig getValkey() {
         return valkey;
     }
@@ -153,7 +144,6 @@ public class EudiwConfig {
                 ", clientId='" + clientId + '\'' +
                 ", redirectUris=" + redirectUris +
                 ", oidFederation='" + openidFederation + '\'' +
-                ", issuerSignerKeyPemFile='" + issuerSignerKeyPemFile + '\'' +
                 '}';
     }
 }

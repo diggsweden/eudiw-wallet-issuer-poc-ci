@@ -1,6 +1,7 @@
 package se.digg.eudiw.service;
 
-import se.digg.wallet.metadata.WalletOAuthClientMetadata;
+
+import se.oidc.oidfed.md.wallet.credentialissuer.WalletOAuthClientMetadata;
 
 import java.util.List;
 

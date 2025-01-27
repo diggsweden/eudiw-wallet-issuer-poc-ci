@@ -21,7 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import se.digg.eudiw.ApiClient;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.client.DefaultApi;
-import se.digg.wallet.metadata.WalletOAuthClientMetadata;
+import se.oidc.oidfed.md.wallet.credentialissuer.WalletOAuthClientMetadata;
 import se.swedenconnect.auth.commons.response.IdTokenValidationException;
 import se.swedenconnect.auth.commons.response.TokenCredential;
 

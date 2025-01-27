@@ -1,11 +1,20 @@
 package se.digg.eudiw.controllers;
 
+import java.security.PublicKey;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
-import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,28 +30,39 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.config.SignerConfig;
+import se.digg.eudiw.credentialissuer.model.CredentialFormatEnum;
 import se.digg.eudiw.service.OpenIdFederationService;
 import se.digg.eudiw.credentialissuer.model.Address;
 import se.digg.eudiw.credentialissuer.model.CredentialOfferParam;
 import se.digg.eudiw.credentialissuer.model.CredentialParam;
 import se.digg.eudiw.credentialissuer.util.PidBuilder;
-import se.digg.wallet.metadata.WalletOAuthClientMetadata;
+import se.digg.wallet.datatypes.common.TokenAttribute;
+import se.digg.wallet.datatypes.common.TokenInput;
+import se.digg.wallet.datatypes.common.TokenIssuer;
+import se.digg.wallet.datatypes.common.TokenSigningAlgorithm;
+import se.digg.wallet.datatypes.mdl.process.MdlTokenIssuer;
+import se.digg.wallet.datatypes.sdjwt.process.SdJwtTokenInput;
+import se.digg.wallet.datatypes.sdjwt.process.SdJwtTokenIssuer;
+import se.oidc.oidfed.md.wallet.credentialissuer.WalletOAuthClientMetadata;
+import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.bundle.CredentialBundles;
 
 @RestController
 public class CredentialController {
-
 
 	private static final Logger logger = LoggerFactory.getLogger(CredentialController.class);
 
 	private final EudiwConfig eudiwConfig;
 	private final SignerConfig signerConfig;
 	private final OpenIdFederationService openIdFederationService;
+    private final CredentialBundles credentialBundles;
 
-	public CredentialController(@Autowired EudiwConfig eudiwConfig, @Autowired OpenIdFederationService openIdFederationService, @Autowired SignerConfig signerConfig) {
+    public CredentialController(@Autowired EudiwConfig eudiwConfig, @Autowired OpenIdFederationService openIdFederationService, @Autowired SignerConfig signerConfig, @Autowired  CredentialBundles credentialBundles) {
 		this.eudiwConfig = eudiwConfig;
 		this.signerConfig = signerConfig;
 		this.openIdFederationService = openIdFederationService;
-	}
+        this.credentialBundles = credentialBundles;
+    }
 
 	@GetMapping("/demo-oidfed-client")
 	String oidfedClientDemo() {
@@ -70,7 +90,8 @@ public class CredentialController {
 
     @PostMapping("/credential")
 	String credential(@AuthenticationPrincipal Jwt jwt, @RequestBody CredentialParam credential) { // @AuthenticationPrincipal Jwt jwt,
-        try {
+		String pidJwtToken = null;
+		try {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			if (authentication.getPrincipal() instanceof Jwt) {
 
@@ -84,24 +105,100 @@ public class CredentialController {
 					jwk = Optional.empty();
 				}
 
-				// TODO - get PID data from ID token and authentic source (t.ex. skatteverket)
-				PidBuilder builder = new PidBuilder(eudiwConfig.getIssuer(), signerConfig)
-                        .withExp(eudiwConfig.getExpHours())
-                        .withVcType("https://attestations.eudiw.se/se_pid");
+				final PkiCredential issuerCredential = credentialBundles.getCredential("issuercredential");
 
+				if (credential.getFormat() == CredentialFormatEnum.JWT_VC_JSON) {
+					//PkiCredential issuerCredential = signerConfig.getCredential();
+					TokenIssuer<SdJwtTokenInput> tokenIssuer = new SdJwtTokenIssuer();
+					SdJwtTokenInput sdJwtTokenInput = new SdJwtTokenInput();
+					sdJwtTokenInput.setIssuer(eudiwConfig.getIssuer());
+					sdJwtTokenInput.setVerifiableCredentialType("https://attestations.eudiw.se/se_pid");
+					sdJwtTokenInput.setAlgorithm(TokenSigningAlgorithm.ECDSA_256);
+					sdJwtTokenInput.setIssuerCredential(issuerCredential);
+					sdJwtTokenInput.setWalletPublicKey(issuerCredential.getPublicKey());
+					sdJwtTokenInput.setAttributes(Stream.of(
+							TokenAttribute.builder().name("given_name").value(jwt.getClaim("givenName")).build(),
+							TokenAttribute.builder().name("last_name").value(jwt.getClaim("surname")).build(),
+							TokenAttribute.builder().name("birthdate").value(jwt.getClaim("birthDate")).build()
+					).filter(item -> item.getValue() != null).collect(Collectors.toList()));
+					sdJwtTokenInput.setExpirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
+					jwk.ifPresent(value -> {
+                        try {
+                            sdJwtTokenInput.setWalletPublicKey(value.toECKey().toECPublicKey());
+                        } catch (JOSEException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+					pidJwtToken =  new String(tokenIssuer.issueToken(sdJwtTokenInput));
+					logger.info("pid jwt token {}", pidJwtToken);
 
-				if (!StringUtils.isBlank(jwt.getClaim("givenName")))
-					builder.addSelectiveDisclosure("given_name", jwt.getClaim("givenName"));
-				if (!StringUtils.isBlank(jwt.getClaim("surname")))
-					builder.addSelectiveDisclosure("last_name", jwt.getClaim("surname"));
-				if (!StringUtils.isBlank(jwt.getClaim("birthDate")))
-					builder.addSelectiveDisclosure("birthdate", jwt.getClaim("birthDate"));
+					// TODO - get PID data from ID token and authentic source (t.ex. skatteverket)
+					//return pidJwtToken;
+				}
+/* mdl
+				final String pidNameSpace = "eu.europa.ec.eudi.pid.1";
+				final String mdlNameSpace = "org.iso.18013.5.1";
 
-				builder.addSelectiveDisclosure("address", new Address("123 Main St", "Anytown", "Anystate", "US"));
+				List<TokenAttribute> tokenAttributes = List.of(
+						TokenAttribute.builder()
+								.nameSpace(pidNameSpace)
+								.name("issuing_country")
+								.value("SE")
+								.build(),
+						TokenAttribute.builder().nameSpace(pidNameSpace).name("given_name").value(jwt.getClaim("givenName")).build(),
+						TokenAttribute.builder().nameSpace(pidNameSpace).name("family_name").value(jwt.getClaim("surname")).build(),
+						TokenAttribute.builder().nameSpace(pidNameSpace).name("birth_date").value(jwt.getClaim("birthDate")).build(),
+						TokenAttribute.builder()
+								.nameSpace(pidNameSpace)
+								.name("age_over_18")
+								.value(true) // TODO
+								.build(),
+						TokenAttribute.builder()
+								.nameSpace(pidNameSpace)
+								.name("expiry_date")
+								.value(LocalDate.ofInstant(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours())), ZoneId.systemDefault()))
+								.build(),
+						TokenAttribute.builder()
+								.nameSpace(pidNameSpace)
+								.name("issuing_authority")
+								.value("Test PID issuer")
+								.build()
+				);
 
-				jwk.ifPresent(value -> builder.withCnf(Map.of("jwk", value.toPublicJWK().toJSONObject())));
+				TokenInput.TokenInputBuilder tokenInputBuilder = TokenInput.builder();
+				jwk.ifPresent(value -> {
+					try {
+						PublicKey walletPublicKey = value.toECKey().toECPublicKey();
+						if (walletPublicKey != null)
+							tokenInputBuilder.walletPublicKey(walletPublicKey);
+						else
+							throw new RuntimeException("wallet public key is not found");
 
-				return builder.build();
+					} catch (JOSEException e) {
+						throw new RuntimeException(e);
+					}
+				});
+
+				tokenInputBuilder.issuerCredential(issuerCredential);
+				tokenInputBuilder.algorithm(TokenSigningAlgorithm.ECDSA_256);
+				tokenInputBuilder.expirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
+				tokenInputBuilder.attributes(tokenAttributes);
+
+				TokenInput tokenInput = tokenInputBuilder.build();
+				MdlTokenIssuer tokenIssuer = new MdlTokenIssuer(true);
+
+				byte[] token = tokenIssuer.issueToken(tokenInput);
+				String mdlToken = Hex.toHexString(token);
+				logger.info("mdl token {}", mdlToken);
+				//return mdlToken;
+*/
+				return pidJwtToken;
+
+				//builder.addSelectiveDisclosure("address", new Address("123 Main St", "Anytown", "Anystate", "US"));
+
+				//jwk.ifPresent(value -> builder.withCnf(Map.of("jwk", value.toPublicJWK().toJSONObject())));
+
+				//return builder.build();
 			}
 			
 		} catch(Exception e) {
@@ -109,6 +206,7 @@ public class CredentialController {
 		}
 		return null;
     }
+
 
     @GetMapping("/credential_offer")
     Map<String, Object> credentialOffer(@RequestParam("credential_offer") CredentialOfferParam credentialOffer) {

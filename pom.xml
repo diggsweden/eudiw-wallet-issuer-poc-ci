@@ -42,8 +42,7 @@
     <reactor-core.version>3.6.0</reactor-core.version>
     <bouncy-castle.version>1.79</bouncy-castle.version>
     <jakarta-annotation.version>3.0.0</jakarta-annotation.version>
-    <eudiw-wallet-metadata.version>1.0.0-SNAPSHOT</eudiw-wallet-metadata.version>
-
+    <eudiw-wallet-entities.version>1.0.0</eudiw-wallet-entities.version>
     <!-- Plugin versions -->
     <maven-deploy-plugin.version>3.1.3</maven-deploy-plugin.version>
     <jreleaser-maven-plugin.version>1.16.0</jreleaser-maven-plugin.version>
@@ -53,15 +52,18 @@
     <maven-failsafe-plugin.version>3.5.2</maven-failsafe-plugin.version>
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+      <credentials-support.version>2.0.1</credentials-support.version>
+      <maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
 
   <dependencies>
     <!-- Wallet Dependencies -->
-    <dependency>
-      <groupId>se.digg.wallet</groupId>
-      <artifactId>eudiw-wallet-metadata-lib-poc</artifactId>
-      <version>${eudiw-wallet-metadata.version}</version>
-    </dependency>
+
+      <dependency>
+          <groupId>se.swedenconnect.security</groupId>
+          <artifactId>credentials-support</artifactId>
+          <version>${credentials-support.version}</version>
+      </dependency>
 
     <!-- Spring Boot Dependencies -->
     <dependency>
@@ -179,6 +181,61 @@
       <optional>true</optional>
     </dependency>
 
+      <!-- Include Jackson support for CBOR -->
+      <dependency>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-cbor</artifactId>
+          <version>2.18.2</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.fasterxml.jackson.datatype</groupId>
+          <artifactId>jackson-datatype-jsr310</artifactId>
+          <version>2.18.2</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.upokecenter</groupId>
+          <artifactId>cbor</artifactId>
+          <version>5.0.0-alpha2</version>
+      </dependency>
+      <dependency>
+          <groupId>net.i2p.crypto</groupId>
+          <artifactId>eddsa</artifactId>
+          <version>0.3.0</version>
+          <type>jar</type>
+      </dependency>
+      <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+          <version>2.0.16</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-annotations</artifactId>
+          <version>2.18.2</version>
+      </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+          <version>2.18.2</version>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-lang3</artifactId>
+          <version>3.17.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-collections4</artifactId>
+          <version>4.4</version>
+      </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+          <version>2.18.2</version>
+      </dependency>
     <!-- Test Dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -190,10 +247,52 @@
       <artifactId>spring-security-test</artifactId>
       <scope>test</scope>
     </dependency>
+
+      <dependency>
+          <groupId>se.swedenconnect.security</groupId>
+          <artifactId>credentials-support-spring-boot-starter</artifactId>
+          <version>${credentials-support.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>se.swedenconnect.security</groupId>
+          <artifactId>credentials-support-nimbus</artifactId>
+          <version>${credentials-support.version}</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+      </dependency>
   </dependencies>
 
   <build>
       <plugins>
+
+          <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>build-helper-maven-plugin</artifactId>
+              <version>3.2.0</version>
+              <executions>
+                  <execution>
+                      <id>add-source</id>
+                      <phase>generate-sources</phase>
+                      <goals>
+                          <goal>add-source</goal>
+                          <goal>add-test-source</goal>
+                      </goals>
+                      <configuration>
+                          <sources>
+                              <source>cose/src/main/java/</source>
+                              <source>openid-federation-metadata/metadata-base/src/main/java</source>
+                              <source>openid-federation-base/src/main/java</source>
+                              <source>openid-federation-metadata/wallet-entities/src/main/java</source>
+                              <source>data-types/src/main/java</source>
+                          </sources>
+                      </configuration>
+                  </execution>
+              </executions>
+          </plugin>
+
           <!-- Core plugins -->
           <plugin>
               <groupId>org.springframework.boot</groupId>
@@ -348,9 +447,9 @@
                               <!-- Ban duplicate dependencies -->
                               <banDuplicatePomDependencyVersions />
 
-                              <!-- Require all dependencies to have versions 
+                              <!-- Require all dependencies to have versions -->
                               <requireUpperBoundDeps />
-                                -->
+
 
                               <!-- IMPORTANT: Enable and fixe: Enforce dependency convergence -->
                               <!-- <dependencyConvergence>

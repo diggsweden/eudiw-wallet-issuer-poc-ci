@@ -52,7 +52,6 @@ eudiw:
   valkey:
     host: local.dev.swedenconnect.se
     port: 6379
-  issuerSignerKeyPemFile: classpath:jwt-ec256-private.pem
   redirectUris:
     - "https://local.dev.swedenconnect.se:9091/callback-test-1-authorisation-flow"
     - "https://local.dev.swedenconnect.se:9091/callback-test-2-pre-authorisation-flow"
@@ -73,3 +72,11 @@ eudiw:
     - cert-location: classpath:dev/tokenSigner.crt
       kid: wp-1
 
+
+credential:
+  bundles:
+    pem:
+      issuercredential:
+        private-key: classpath:issuer_private_pkcs8.key
+        certificates: classpath:issuer-certificate.crt
+        name: "Issuer credential"

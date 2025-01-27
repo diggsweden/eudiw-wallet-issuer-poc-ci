@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.util.Assert;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.service.OpenIdFederationService;
-import se.digg.wallet.metadata.WalletOAuthClientMetadata;
+import se.oidc.oidfed.md.wallet.credentialissuer.WalletOAuthClientMetadata;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

@@ -246,6 +246,9 @@ public class MetadataController {
                                                 .build()
                                 ))
                                 .build())
+                        .format("mso_mdoc")
+                        .doctype("eu.europa.ec.eudi.pid.1")
+                        .scope("eu.europa.ec.eudi.pid.1")
                         .credentialSigningAlgValuesSupported(List.of("ES256"))
                         .cryptographicBindingMethodsSupported(List.of("jwk"))
                         .display(List.of(

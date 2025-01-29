@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.config.SignerConfig;
 import se.digg.eudiw.service.OpenIdFederationService;
+import se.digg.wallet.datatypes.mdl.process.MdlTokenIssuer;
 import se.oidc.oidfed.base.data.LanguageObject;
 import se.oidc.oidfed.base.data.federation.EntityMetadataInfoClaim;
 import se.oidc.oidfed.base.data.federation.EntityStatement;
@@ -87,15 +88,15 @@ public class MetadataController {
                         .proofType("jwt", ProofTypeWrapper.createProofType(List.of("ES256")))                        
                         .display(List.of(
                                 Display.builder()
-                                        .name("DIGG PID")
+                                        .name("DIGG sd-jwt vc PID")
                                         .locale("en")
                                         .build(),
                                 Display.builder()
-                                        .name("DIGG PID")
+                                        .name("DIGG sd-jwt vc PID")
                                         .locale("sv")
                                         .build(),
                                 Display.builder()
-                                        .name("DIGG PID")
+                                        .name("DIGG sd-jwt vc PID")
                                         .locale("de")
                                         .build()
                         ))
@@ -139,6 +140,129 @@ public class MetadataController {
                         //.order(List.of("given_name","last_name"))
                         .build()
                 )
+                .credentialConfiguration("eu.europa.ec.eudi.pid_mdoc", IsoMdlCredentialConfiguration.builder()
+                        .claim("eu.europa.ec.eudi.pid.1", "given_name", Claim.builder()
+                                .mandatory(true)
+                                .valueType("text")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Given Name")
+                                                .locale("en")
+                                                .build(),
+                                        Display.builder()
+                                                .name("Förnamn")
+                                                .locale("sv")
+                                                .build(),
+                                        Display.builder()
+                                                .name("Vorname")
+                                                .locale("de")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "last_name", Claim.builder()
+                                .mandatory(true)
+                                .valueType("text")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Surname")
+                                                .locale("en")
+                                                .build(),
+                                        Display.builder()
+                                                .name("Efternamn")
+                                                .locale("sv")
+                                                .build(),
+                                        Display.builder()
+                                                .name("Nachname")
+                                                .locale("de")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "age_over_18", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(true)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Adult or minor")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "birth_date", Claim.builder()
+                                .mandatory(true)
+                                .valueType("full-date") // TODO kolla hur det ska formateras
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Date of Birth")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "expiry_date", Claim.builder()
+                                .mandatory(true)
+                                .valueType("full-date")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Expiry date")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "issuance_date", Claim.builder()
+                                .mandatory(true)
+                                .valueType("full-date")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Date (and possibly time) when the PID was issued")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "issuing_authority", Claim.builder()
+                                .mandatory(true)
+                                .valueType("text")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Name of the administrative authority that has issued this PID instance, or the ISO 3166 Alpha-2 country code of the respective Member State if there is no separate authority authorized to issue PIDs")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "issuing_country", Claim.builder()
+                                .mandatory(true)
+                                .valueType("text")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Alpha-2 country code, as defined in ISO 3166-1, of the PID Provider's country or territory")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "issuing_country", Claim.builder()
+                                .mandatory(true)
+                                .valueType("text")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Alpha-2 country code, as defined in ISO 3166-1, of the PID Provider's country or territory")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .credentialSigningAlgValuesSupported(List.of("ES256"))
+                        .cryptographicBindingMethodsSupported(List.of("jwk"))
+                        .display(List.of(
+                                Display.builder()
+                                        .name("DIGG mdl PID")
+                                        .locale("en")
+                                        .build(),
+                                Display.builder()
+                                        .name("DIGG mdl PID")
+                                        .locale("sv")
+                                        .build(),
+                                Display.builder()
+                                        .name("DIGG mdl PID")
+                                        .locale("de")
+                                        .build()
+                        ))
+                        .build())
                 .credentialConfiguration("eu.europa.ec.eudi.pid_jwt_vc_json", SdJwtCredentialConfiguration.builder()
                         .format("vc+sd-jwt")
                         .scope("eu.europa.ec.eudi.pid.1")

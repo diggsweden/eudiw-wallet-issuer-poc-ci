@@ -98,6 +98,7 @@ public class OidFederatedRegisteredClientRepository implements RegisteredClientR
 
         registeredClientBuilder = registeredClientBuilder.scope("identitycredential.read")
                 .scope("VerifiablePortableDocumentA1")
+                .scope("eu.europa.ec.eudi.pid.1")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .clientSettings(ClientSettings.builder()

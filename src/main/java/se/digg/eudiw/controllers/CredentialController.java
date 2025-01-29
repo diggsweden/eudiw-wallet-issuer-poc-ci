@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,6 +93,7 @@ public class CredentialController {
 	String credential(@AuthenticationPrincipal Jwt jwt, @RequestBody CredentialParam credential) { // @AuthenticationPrincipal Jwt jwt,
 		String pidJwtToken = null;
 		try {
+
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			if (authentication.getPrincipal() instanceof Jwt) {
 
@@ -119,7 +121,15 @@ public class CredentialController {
 					sdJwtTokenInput.setAttributes(Stream.of(
 							TokenAttribute.builder().name("given_name").value(jwt.getClaim("givenName")).build(),
 							TokenAttribute.builder().name("last_name").value(jwt.getClaim("surname")).build(),
-							TokenAttribute.builder().name("birthdate").value(jwt.getClaim("birthDate")).build()
+							TokenAttribute.builder().name("birthdate").value(jwt.getClaim("birthDate")).build(),
+							TokenAttribute.builder().name("issuance_date").value(new Date()).build(),
+							TokenAttribute.builder().name("age_over_18").value(Boolean.TRUE).build(),
+							TokenAttribute.builder().name("issuing_country").value("SE").build(),
+							TokenAttribute.builder().name("issuing_authority").value("DIGG").build(),
+							TokenAttribute.builder().name("birth_date").value("19121212").build(),
+							TokenAttribute.builder().name("expiry_date").value(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours()))).build() // TODO
+
+
 					).filter(item -> item.getValue() != null).collect(Collectors.toList()));
 					sdJwtTokenInput.setExpirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
 					jwk.ifPresent(value -> {

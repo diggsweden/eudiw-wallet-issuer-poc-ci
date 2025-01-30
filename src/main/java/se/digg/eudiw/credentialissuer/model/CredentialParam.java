@@ -1,17 +1,22 @@
 package se.digg.eudiw.credentialissuer.model;
 
+import java.util.Objects;
+
 public class CredentialParam {
     CredentialFormatEnum format;
     JwtProof proof;
+    String vct;
 
     public CredentialParam() {
-        this.format = CredentialFormatEnum.JWT_VC_JSON;
+        this.format = CredentialFormatEnum.VC_SD_JWT;
         this.proof = null;
+        this.vct = null;
     }
 
-    public CredentialParam(CredentialFormatEnum format, JwtProof proof) {
+    public CredentialParam(CredentialFormatEnum format, JwtProof proof, String vct) {
         this.format = format;
         this.proof = proof;
+        this.vct = vct;
     }
 
     public CredentialFormatEnum getFormat() {
@@ -30,38 +35,32 @@ public class CredentialParam {
         this.proof = proof;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((format == null) ? 0 : format.hashCode());
-        result = prime * result + ((proof == null) ? 0 : proof.hashCode());
-        return result;
+    public String getVct() {
+        return vct;
+    }
+
+    public void setVct(String vct) {
+        this.vct = vct;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        CredentialParam other = (CredentialParam) obj;
-        if (format != other.format)
-            return false;
-        if (proof == null) {
-            if (other.proof != null)
-                return false;
-        } else if (!proof.equals(other.proof))
-            return false;
-        return true;
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CredentialParam that = (CredentialParam) o;
+        return format == that.format && Objects.equals(proof, that.proof) && Objects.equals(vct, that.vct);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(format, proof, vct);
     }
 
     @Override
     public String toString() {
-        return "CredentialParam [format=" + format + ", proof=" + proof + "]";
+        return "CredentialParam{" +
+                "format=" + format +
+                ", proof=" + proof +
+                ", vct='" + vct + '\'' +
+                '}';
     }
-
-    
 }

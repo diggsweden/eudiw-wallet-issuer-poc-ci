@@ -96,11 +96,9 @@ public class OidFederatedRegisteredClientRepository implements RegisteredClientR
             registeredClientBuilder = registeredClientBuilder.redirectUri(uri);
         }
 
-        registeredClientBuilder = registeredClientBuilder.scope("identitycredential.read")
-                .scope("VerifiablePortableDocumentA1")
+        registeredClientBuilder = registeredClientBuilder
                 .scope("eu.europa.ec.eudi.pid.1")
                 .scope(OidcScopes.OPENID)
-                .scope(OidcScopes.PROFILE)
                 .clientSettings(ClientSettings.builder()
                         .requireAuthorizationConsent(true)
                         .requireProofKey(true) //Only PKCE is supported

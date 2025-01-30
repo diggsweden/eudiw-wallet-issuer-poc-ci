@@ -1,16 +1,18 @@
 package se.digg.eudiw.credentialissuer.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Arrays;
 
 public enum CredentialFormatEnum {
 
-    @JsonProperty("jwt_vc_json")
-    JWT_VC_JSON("jwt_vc_json"),
-    JWT_VC_JSON_LD("jwt_vc_json-ld"),
-    LDP_VC("ldp_vc");
+    @JsonProperty("vc+sd-jwt")
+    VC_SD_JWT("vc+sd-jwt"),
 
-    private String format;
+    @JsonProperty("mso_mdoc")
+    MSO_MDOC("mso_mdoc");
+
+    private final String format;
 
     CredentialFormatEnum(String format) {
         this.format = format;
@@ -30,7 +32,7 @@ public enum CredentialFormatEnum {
     public static CredentialFormatEnum fromStringOrDefault(String format) {
         CredentialFormatEnum credentialFormatEnum = fromString(format);
         if (credentialFormatEnum == null) {
-            return JWT_VC_JSON;
+            return VC_SD_JWT;
         }
         return credentialFormatEnum;
     }

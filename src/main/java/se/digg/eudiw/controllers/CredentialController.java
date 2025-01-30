@@ -5,10 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -109,7 +106,7 @@ public class CredentialController {
 
 				final PkiCredential issuerCredential = credentialBundles.getCredential("issuercredential");
 
-				if (credential.getFormat() == CredentialFormatEnum.JWT_VC_JSON) {
+				if (credential.getFormat() == CredentialFormatEnum.VC_SD_JWT) {
 					//PkiCredential issuerCredential = signerConfig.getCredential();
 					TokenIssuer<SdJwtTokenInput> tokenIssuer = new SdJwtTokenIssuer();
 					SdJwtTokenInput sdJwtTokenInput = new SdJwtTokenInput();
@@ -121,7 +118,6 @@ public class CredentialController {
 					sdJwtTokenInput.setAttributes(Stream.of(
 							TokenAttribute.builder().name("given_name").value(jwt.getClaim("givenName")).build(),
 							TokenAttribute.builder().name("last_name").value(jwt.getClaim("surname")).build(),
-							TokenAttribute.builder().name("birthdate").value(jwt.getClaim("birthDate")).build(),
 							TokenAttribute.builder().name("issuance_date").value(new Date()).build(),
 							TokenAttribute.builder().name("age_over_18").value(Boolean.TRUE).build(),
 							TokenAttribute.builder().name("issuing_country").value("SE").build(),
@@ -142,70 +138,71 @@ public class CredentialController {
 					pidJwtToken =  new String(tokenIssuer.issueToken(sdJwtTokenInput));
 					logger.info("pid jwt token {}", pidJwtToken);
 
-					// TODO - get PID data from ID token and authentic source (t.ex. skatteverket)
-					//return pidJwtToken;
+					return pidJwtToken;
 				}
-/* mdl
-				final String pidNameSpace = "eu.europa.ec.eudi.pid.1";
-				final String mdlNameSpace = "org.iso.18013.5.1";
 
-				List<TokenAttribute> tokenAttributes = List.of(
-						TokenAttribute.builder()
-								.nameSpace(pidNameSpace)
-								.name("issuing_country")
-								.value("SE")
-								.build(),
-						TokenAttribute.builder().nameSpace(pidNameSpace).name("given_name").value(jwt.getClaim("givenName")).build(),
-						TokenAttribute.builder().nameSpace(pidNameSpace).name("family_name").value(jwt.getClaim("surname")).build(),
-						TokenAttribute.builder().nameSpace(pidNameSpace).name("birth_date").value(jwt.getClaim("birthDate")).build(),
-						TokenAttribute.builder()
-								.nameSpace(pidNameSpace)
-								.name("age_over_18")
-								.value(true) // TODO
-								.build(),
-						TokenAttribute.builder()
-								.nameSpace(pidNameSpace)
-								.name("expiry_date")
-								.value(LocalDate.ofInstant(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours())), ZoneId.systemDefault()))
-								.build(),
-						TokenAttribute.builder()
-								.nameSpace(pidNameSpace)
-								.name("issuing_authority")
-								.value("Test PID issuer")
-								.build()
-				);
+				if (credential.getFormat() == CredentialFormatEnum.MSO_MDOC) {
 
-				TokenInput.TokenInputBuilder tokenInputBuilder = TokenInput.builder();
-				jwk.ifPresent(value -> {
-					try {
-						PublicKey walletPublicKey = value.toECKey().toECPublicKey();
-						if (walletPublicKey != null)
-							tokenInputBuilder.walletPublicKey(walletPublicKey);
-						else
-							throw new RuntimeException("wallet public key is not found");
+					final String pidNameSpace = "eu.europa.ec.eudi.pid.1";
 
-					} catch (JOSEException e) {
-						throw new RuntimeException(e);
-					}
-				});
+					List<TokenAttribute> tokenAttributes = List.of(
+							TokenAttribute.builder()
+									.nameSpace(pidNameSpace)
+									.name("issuing_country")
+									.value("SE")
+									.build(),
+							TokenAttribute.builder().nameSpace(pidNameSpace).name("given_name").value(jwt.getClaim("givenName")).build(),
+							TokenAttribute.builder().nameSpace(pidNameSpace).name("family_name").value(jwt.getClaim("surname")).build(),
+							TokenAttribute.builder().nameSpace(pidNameSpace).name("birth_date").value(jwt.getClaim("birthDate")).build(),
+							TokenAttribute.builder().nameSpace(pidNameSpace).name("issuance_date").value(new Date()).build(),
 
-				tokenInputBuilder.issuerCredential(issuerCredential);
-				tokenInputBuilder.algorithm(TokenSigningAlgorithm.ECDSA_256);
-				tokenInputBuilder.expirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
-				tokenInputBuilder.attributes(tokenAttributes);
+							TokenAttribute.builder()
+									.nameSpace(pidNameSpace)
+									.name("age_over_18")
+									.value(true) // TODO
+									.build(),
+							TokenAttribute.builder()
+									.nameSpace(pidNameSpace)
+									.name("expiry_date")
+									.value(LocalDate.ofInstant(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours())), ZoneId.systemDefault()))
+									.build(),
+							TokenAttribute.builder()
+									.nameSpace(pidNameSpace)
+									.name("issuing_authority")
+									.value("Test PID issuer")
+									.build()
+					);
 
-				TokenInput tokenInput = tokenInputBuilder.build();
-				MdlTokenIssuer tokenIssuer = new MdlTokenIssuer(true);
+					TokenInput.TokenInputBuilder tokenInputBuilder = TokenInput.builder();
+					jwk.ifPresent(value -> {
+						try {
+							PublicKey walletPublicKey = value.toECKey().toECPublicKey();
+							if (walletPublicKey != null)
+								tokenInputBuilder.walletPublicKey(walletPublicKey);
+							else
+								throw new RuntimeException("wallet public key is not found");
 
-				byte[] token = tokenIssuer.issueToken(tokenInput);
-				String mdlToken = Hex.toHexString(token);
-				logger.info("mdl token {}", mdlToken);
-				//return mdlToken;
-*/
-				return pidJwtToken;
+						} catch (JOSEException e) {
+							throw new RuntimeException(e);
+						}
+					});
 
-				//builder.addSelectiveDisclosure("address", new Address("123 Main St", "Anytown", "Anystate", "US"));
+					tokenInputBuilder.issuerCredential(issuerCredential);
+					tokenInputBuilder.algorithm(TokenSigningAlgorithm.ECDSA_256);
+					tokenInputBuilder.expirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
+					tokenInputBuilder.attributes(tokenAttributes);
 
+					TokenInput tokenInput = tokenInputBuilder.build();
+					MdlTokenIssuer tokenIssuer = new MdlTokenIssuer(true);
+
+					byte[] token = tokenIssuer.issueToken(tokenInput);
+					String mdlToken = Base64.getEncoder().encodeToString(token);
+
+					logger.info("mdl token {}", mdlToken);
+					return mdlToken;
+
+					//builder.addSelectiveDisclosure("address", new Address("123 Main St", "Anytown", "Anystate", "US"));
+				}
 				//jwk.ifPresent(value -> builder.withCnf(Map.of("jwk", value.toPublicJWK().toJSONObject())));
 
 				//return builder.build();

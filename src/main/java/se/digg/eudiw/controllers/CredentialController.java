@@ -16,6 +16,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,13 +27,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import org.springframework.web.server.ResponseStatusException;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.config.SignerConfig;
-import se.digg.eudiw.credentialissuer.model.CredentialFormatEnum;
+import se.digg.eudiw.credentialissuer.model.*;
 import se.digg.eudiw.service.OpenIdFederationService;
-import se.digg.eudiw.credentialissuer.model.Address;
-import se.digg.eudiw.credentialissuer.model.CredentialOfferParam;
-import se.digg.eudiw.credentialissuer.model.CredentialParam;
 import se.digg.eudiw.credentialissuer.util.PidBuilder;
 import se.digg.wallet.datatypes.common.TokenAttribute;
 import se.digg.wallet.datatypes.common.TokenInput;
@@ -87,7 +86,7 @@ public class CredentialController {
     }
 
     @PostMapping("/credential")
-	String credential(@AuthenticationPrincipal Jwt jwt, @RequestBody CredentialParam credential) { // @AuthenticationPrincipal Jwt jwt,
+	CredentialResponse credential(@AuthenticationPrincipal Jwt jwt, @RequestBody CredentialParam credential) { // @AuthenticationPrincipal Jwt jwt,
 		String pidJwtToken = null;
 		try {
 
@@ -138,7 +137,7 @@ public class CredentialController {
 					pidJwtToken =  new String(tokenIssuer.issueToken(sdJwtTokenInput));
 					logger.info("pid jwt token {}", pidJwtToken);
 
-					return pidJwtToken;
+					return new CredentialResponse(pidJwtToken);
 				}
 
 				if (credential.getFormat() == CredentialFormatEnum.MSO_MDOC) {
@@ -199,7 +198,7 @@ public class CredentialController {
 					String mdlToken = Base64.getEncoder().encodeToString(token);
 
 					logger.info("mdl token {}", mdlToken);
-					return mdlToken;
+					return new CredentialResponse(mdlToken);
 
 					//builder.addSelectiveDisclosure("address", new Address("123 Main St", "Anytown", "Anystate", "US"));
 				}
@@ -211,7 +210,8 @@ public class CredentialController {
 		} catch(Exception e) {
 			throw new RuntimeException(e);
 		}
-		return null;
+		throw new ResponseStatusException(
+				HttpStatus.NOT_FOUND, "Credential Not Found");
     }
 
 

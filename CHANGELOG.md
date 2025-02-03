@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.13] - 2025-02-03
+
+### Changed
+
+- Use org wide shared components
+- Correct typ in jwt header when sd jwt vc
+- Correct credential response exkl nonce
+
 ## [0.0.12] - 2025-01-30
 
 ### Added
@@ -13,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add missing mdl metadata
 - Add mdl eu.europa.ec.eudi.pid_mdoc - work in progress
 - Add scope eu.europa.ec.eudi.pid.1 support
+
+### Changed
+
+- V0.0.12
 
 ## [0.0.11] - 2025-01-29
 
@@ -172,6 +184,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update zxing to v3.5.3
 - Update spring non-major
 
+[0.0.13]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.12..v0.0.13
 [0.0.12]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.11..v0.0.12
 [0.0.11]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.10..v0.0.11
 [0.0.10]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.9..v0.0.10

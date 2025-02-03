@@ -110,7 +110,7 @@ public class CredentialController {
 					TokenIssuer<SdJwtTokenInput> tokenIssuer = new SdJwtTokenIssuer();
 					SdJwtTokenInput sdJwtTokenInput = new SdJwtTokenInput();
 					sdJwtTokenInput.setIssuer(eudiwConfig.getIssuer());
-					sdJwtTokenInput.setVerifiableCredentialType("https://attestations.eudiw.se/se_pid");
+					sdJwtTokenInput.setVerifiableCredentialType(credential.getVct());
 					sdJwtTokenInput.setAlgorithm(TokenSigningAlgorithm.ECDSA_256);
 					sdJwtTokenInput.setIssuerCredential(issuerCredential);
 					sdJwtTokenInput.setWalletPublicKey(issuerCredential.getPublicKey());
@@ -142,7 +142,7 @@ public class CredentialController {
 
 				if (credential.getFormat() == CredentialFormatEnum.MSO_MDOC) {
 
-					final String pidNameSpace = "eu.europa.ec.eudi.pid.1";
+					final String pidNameSpace = credential.getDoctype();
 
 					List<TokenAttribute> tokenAttributes = List.of(
 							TokenAttribute.builder()
@@ -196,6 +196,7 @@ public class CredentialController {
 
 					byte[] token = tokenIssuer.issueToken(tokenInput);
 					String mdlToken = Base64.getEncoder().encodeToString(token);
+
 
 					logger.info("mdl token {}", mdlToken);
 					return new CredentialResponse(mdlToken);

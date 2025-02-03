@@ -25,7 +25,7 @@ import java.util.*;
 @Data
 public class SdJwt {
 
-  public static final String SD_JWT_TYPE = "dc+sd-jwt";
+  public static final String SD_JWT_TYPE = "vc+sd-jwt";
   public static final String KB_JWT_TYPE = "kb+jwt";
   public static final List<String> STD_CLAIMS = List.of("iss", "nbf", "exp", "cnf", "vct", "status", "sub", "iat", "_sd_alg");
 

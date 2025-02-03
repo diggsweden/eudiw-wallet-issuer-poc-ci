@@ -52,12 +52,12 @@ jobs:
       
       - name: Release with JReleaser
         env:
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.JRELEASER_GITHUB_TOKEN }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.OSPO_BOT_GPG_PUB }}
           JRELEASER_GPG_SECRET_KEY: ${{ secrets.OSPO_BOT_GPG_PRIV }}
           JRELEASER_GPG_PASSPHRASE: ${{ secrets.OSPO_BOT_GPG_PASS }}
           GITHUB_ACTOR: ${{ github.actor }}
-          PACKAGE_TOKEN: ${{ secrets.JRELEASER_GITHUB_TOKEN }}
+          PACKAGE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: mvn $MAVEN_CLI_OPTS -s development/maven-gh-settings.xml deploy jreleaser:full-release -DskipTests
         
       - name: JReleaser output

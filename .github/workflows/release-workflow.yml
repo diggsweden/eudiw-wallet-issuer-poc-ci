@@ -14,12 +14,15 @@ permissions:
 
 jobs:
   version-bump:
+    secrets: inherit
     permissions:
       contents: write
       packages: read
-    secrets:
-      inherit
-    uses: ./.github/workflows/release-version-bump-changelog.yml
+    uses: diggsweden/.github/.github/workflows/version-bump-changelog.yml@main
+    with:
+      updatePom: true
+      file_pattern: pom.xml CHANGELOG.md
+  
   publish:
     needs: [version-bump]
     permissions:
@@ -28,6 +31,7 @@ jobs:
       id-token: write  # Required for SLSA provenance
       actions: read   # Required for SLSA provenance v2
     uses: ./.github/workflows/release-publish.yml
+  
   release:
     needs: [publish]
     permissions:

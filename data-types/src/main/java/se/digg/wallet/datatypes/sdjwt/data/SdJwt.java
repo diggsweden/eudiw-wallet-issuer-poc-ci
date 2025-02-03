@@ -145,7 +145,7 @@ public class SdJwt {
         .issueTime(new Date())
         .expirationTime(Date.from(Instant.now().plus(validity)))
         .claim("vct", sdJwt.getVcType())
-        .claim("_sd_alg", sdJwt.getSdAlgorithm())
+        .claim("_sd_alg", sdJwt.getSdAlgorithm().toLowerCase())
         .claim("cnf", sdJwt.getConfirmationKey() != null
           ? Collections.singletonMap("jwk", sdJwt.confirmationKey.toJSONObject())
           : null)

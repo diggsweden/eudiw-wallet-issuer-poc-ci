@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
-import org.bouncycastle.util.encoders.Hex;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +27,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.config.SignerConfig;
 import se.digg.eudiw.credentialissuer.model.*;
+import se.digg.eudiw.credentialissuer.util.ProofDecoder;
 import se.digg.eudiw.service.OpenIdFederationService;
 import se.digg.eudiw.credentialissuer.util.PidBuilder;
 import se.digg.wallet.datatypes.common.TokenAttribute;
@@ -86,7 +88,7 @@ public class CredentialController {
     }
 
     @PostMapping("/credential")
-	CredentialResponse credential(@AuthenticationPrincipal Jwt jwt, @RequestBody CredentialParam credential) { // @AuthenticationPrincipal Jwt jwt,
+	CredentialResponse credential(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CredentialParam credential) { // @AuthenticationPrincipal Jwt jwt,
 		String pidJwtToken = null;
 		try {
 
@@ -101,6 +103,12 @@ public class CredentialController {
 				}
 				else {
 					jwk = Optional.empty();
+				}
+
+				Optional<JWK> proofJwk = ProofDecoder.decodeJwtProf(credential.getProof());
+				if (credential.getProof() != null && "jwt".equals(credential.getProof().getProofType())) {
+					String proofJwt = credential.getProof().getJwt();
+
 				}
 
 				final PkiCredential issuerCredential = credentialBundles.getCredential("issuercredential");
@@ -127,7 +135,8 @@ public class CredentialController {
 
 					).filter(item -> item.getValue() != null).collect(Collectors.toList()));
 					sdJwtTokenInput.setExpirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
-					jwk.ifPresent(value -> {
+
+					proofJwk.ifPresent(value -> {
                         try {
                             sdJwtTokenInput.setWalletPublicKey(value.toECKey().toECPublicKey());
                         } catch (JOSEException e) {

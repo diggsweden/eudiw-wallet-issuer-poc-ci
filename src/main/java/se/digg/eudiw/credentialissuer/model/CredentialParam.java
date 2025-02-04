@@ -1,9 +1,14 @@
 package se.digg.eudiw.credentialissuer.model;
 
+import jakarta.validation.constraints.NotNull;
+import org.springframework.validation.annotation.Validated;
+
 import java.util.Objects;
 
+@Validated
 public class CredentialParam {
     CredentialFormatEnum format;
+    @NotNull
     JwtProof proof;
     String vct;
     String doctype;

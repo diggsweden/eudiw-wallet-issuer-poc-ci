@@ -10,22 +10,24 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.openid.connect.sdk.Nonce;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
@@ -55,6 +57,8 @@ public class CredentialController {
 	private final SignerConfig signerConfig;
 	private final OpenIdFederationService openIdFederationService;
     private final CredentialBundles credentialBundles;
+
+	private ObjectMapper objectMapper = new ObjectMapper();
 
     public CredentialController(@Autowired EudiwConfig eudiwConfig, @Autowired OpenIdFederationService openIdFederationService, @Autowired SignerConfig signerConfig, @Autowired  CredentialBundles credentialBundles) {
 		this.eudiwConfig = eudiwConfig;
@@ -95,13 +99,12 @@ public class CredentialController {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			if (authentication.getPrincipal() instanceof Jwt) {
 
-				String clientId =  jwt.getClaim("clientId");
+				String clientId = jwt.getClaim("clientId");
 				WalletOAuthClientMetadata walletOAuthClientMetadata = openIdFederationService.resolveWallet(clientId);
 				Optional<JWK> jwk;
 				if (walletOAuthClientMetadata != null) {
 					jwk = walletOAuthClientMetadata.getJwkSet().getKeys().stream().findFirst();
-				}
-				else {
+				} else {
 					jwk = Optional.empty();
 				}
 
@@ -137,13 +140,13 @@ public class CredentialController {
 					sdJwtTokenInput.setExpirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
 
 					proofJwk.ifPresent(value -> {
-                        try {
-                            sdJwtTokenInput.setWalletPublicKey(value.toECKey().toECPublicKey());
-                        } catch (JOSEException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-					pidJwtToken =  new String(tokenIssuer.issueToken(sdJwtTokenInput));
+						try {
+							sdJwtTokenInput.setWalletPublicKey(value.toECKey().toECPublicKey());
+						} catch (JOSEException e) {
+							throw new RuntimeException(e);
+						}
+					});
+					pidJwtToken = new String(tokenIssuer.issueToken(sdJwtTokenInput));
 					logger.info("pid jwt token {}", pidJwtToken);
 
 					return new CredentialResponse(pidJwtToken);
@@ -216,8 +219,12 @@ public class CredentialController {
 
 				//return builder.build();
 			}
-			
+
+		}
+		catch (HttpClientErrorException.BadRequest badRequest) {
+			throw badRequest;
 		} catch(Exception e) {
+			logger.info("Error occurred while issuing credential token", e);
 			throw new RuntimeException(e);
 		}
 		throw new ResponseStatusException(
@@ -234,5 +241,37 @@ public class CredentialController {
 		}
 
     }
+
+	@ExceptionHandler(ValidationException.class)
+	public ResponseEntity<String> handleIllegalArgumentException(ValidationException ex) {
+		return new ResponseEntity<>("Global Error: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<String> handleIllegalArgumentException(MethodArgumentNotValidException ex) {
+		logger.info("Probably missing proof", ex);
+		String wwwAuthenticate = "";
+		Nonce dPoPNonce = new Nonce();
+		MultiValueMap<String, String> headers = MultiValueMap.fromSingleValue(Map.of(
+				"WWW-Authenticate", wwwAuthenticate,
+			"DPoP-Nonce", dPoPNonce.getValue()
+			));
+		Map<String, Object> data = Map.of(
+				"c_nonce", dPoPNonce.getValue(),
+				"c_nonce_expires_in", 86400,
+				"error", "invalid_proof",
+				"error_description", "Credential Issuer requires key proof to be bound to a Credential Issuer provided nonce."
+		);
+        try {
+            return new ResponseEntity<>(objectMapper.writeValueAsString(data), headers, HttpStatus.BAD_REQUEST);
+        } catch (JsonProcessingException e) {
+			return handleGeneralException(ex);
+        }
+    }
+	// Catch all other exceptions
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<String> handleGeneralException(Exception ex) {
+		return new ResponseEntity<>("An error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+	}
 
 }

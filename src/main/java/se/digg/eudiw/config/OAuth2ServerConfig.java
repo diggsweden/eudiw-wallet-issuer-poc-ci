@@ -69,7 +69,7 @@ public class OAuth2ServerConfig {
 
   @Bean
   @Order(1)
-  public SecurityFilterChain foo(HttpSecurity http) throws Exception {
+  public SecurityFilterChain parFilterChain(HttpSecurity http) throws Exception {
     http
             .securityMatcher("/oauth2/par")
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
@@ -96,7 +96,14 @@ public class OAuth2ServerConfig {
                     authorizationServer
                             .registeredClientRepository(registeredClientRepository)
                             .tokenGenerator(tokenGenerator())
-                            .oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
+                            .oidc(oidc -> oidc
+                                    .providerConfigurationEndpoint(providerConfigurationEndpoint ->
+                                            providerConfigurationEndpoint.providerConfigurationCustomizer(builder -> builder
+                                                    .claim("pushed_authorization_request_endpoint", String.format("%s/%s", config.getIssuerBaseUrl(), "oauth2/par")))
+
+
+                                    )
+                            )	// Enable OpenID Connect 1.0
                             .authorizationEndpoint(authorizationEndpoint ->
                                     authorizationEndpoint
                                             .authorizationRequestConverter(new OAuth2ParAuthorizationCodeRequestAuthenticationConverter(parCacheService))

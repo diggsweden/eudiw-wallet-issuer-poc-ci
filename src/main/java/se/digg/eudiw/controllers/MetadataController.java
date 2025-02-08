@@ -330,17 +330,19 @@ public class MetadataController {
         final PkiCredential issuerCredential = credentialBundles.getCredential("issuercredential");
 
         try {
+
+            final EntityMetadataInfoClaim entityMetadataInfoClaim = EntityMetadataInfoClaim.builder()
+                    .federationEntityMetadataObject(
+                            FederationEntityMetadata.builder()
+                                    .organizationName(LanguageObject.builder(String.class).defaultValue("DIGG").build())
+                                    .build().toJsonObject())
+                    .build();
+                    entityMetadataInfoClaim.setMetadataClaimsObject("openid_credential_issuer", metadata().toJsonObject());
             final EntityStatementDefinedParams definedParams =
                     EntityStatementDefinedParams.builder()
                     .jwkSet(new JWKSet(signer.getPublicJwk()))
                     .metadata(
-                            EntityMetadataInfoClaim.builder()
-                            .federationEntityMetadataObject(
-                                    FederationEntityMetadata.builder()
-                                            .organizationName(LanguageObject.builder(String.class).defaultValue("DIGG").build())
-                                            .build().toJsonObject())
-                                    .customEntityMetadataObject("openid_credential_issuer", metadata().toJsonObject())
-                                    .build()
+                            entityMetadataInfoClaim
                     )
                             .sourceEndpoint(String.format("%s/%s", eudiwConfig.getIssuerBaseUrl(), ".well-known/openid-federation"))
                             .authorityHints(eudiwConfig.getOpenidFederation().authorityHints())

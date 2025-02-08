@@ -293,11 +293,10 @@
                       </goals>
                       <configuration>
                           <sources>
-                              <source>cose/src/main/java/</source>
                               <source>openid-federation-metadata/metadata-base/src/main/java</source>
                               <source>openid-federation-base/src/main/java</source>
+                              <source>eudiw-wallet-token-lib/src/main/java</source>
                               <source>openid-federation-metadata/wallet-entities/src/main/java</source>
-                              <source>data-types/src/main/java</source>
                           </sources>
                       </configuration>
                   </execution>

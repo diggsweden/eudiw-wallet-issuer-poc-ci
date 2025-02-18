@@ -20,7 +20,9 @@ openssl req -new -x509 \
 -key issuer_private_pkcs8.key \
 -out issuer-certificate.crt \
 -days 365 \
--subj "/CN=local.dev.swedenconnect.se"
+-subj "/CN=local.dev.swedenconnect.se" \
+-addext "subjectAltName = DNS:local.dev.swedenconnect.se" \
+-addext "keyUsage = Digital Signature"
 ```
 
 

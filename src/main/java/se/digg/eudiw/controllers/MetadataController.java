@@ -181,6 +181,7 @@ public class MetadataController {
                         .scope("eu.europa.ec.eudi.pid.1")
                         .credentialSigningAlgValuesSupported(List.of("ES256"))
                         .cryptographicBindingMethodsSupported(List.of("jwk"))
+                        .proofType("jwt", ProofTypeWrapper.createProofType(List.of("ES256")))
                         .display(List.of(
                                 Display.builder()
                                         .name("DIGG mdoc PID")

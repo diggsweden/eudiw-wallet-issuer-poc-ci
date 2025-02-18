@@ -68,6 +68,7 @@ eudiw:
     - "https://local.dev.swedenconnect.se:9443/callback-test-2-pre-authorisation-flow"
     - "https://local.dev.swedenconnect.se:9443/callback-test-3-par"
     - "https://local.dev.swedenconnect.se:9443"
+    - "eu.europa.ec.euidi://authorization"
   swedenconnect:
     base-url: https://local.dev.swedenconnect.se:9060/id-backend/auth
     client: wallet-dev
@@ -90,7 +91,7 @@ credential:
         certificates: file:../eudiw-prototype/sc-environment/config/openid-fed/keystores/issuer-certificate.crt
         #./pkcs8/certificate.crt
 
-        name: "Issuer credential"
+        #name: "Issuer credential"
   bundle:
     monitoring:
       health-endpoint-enabled: true

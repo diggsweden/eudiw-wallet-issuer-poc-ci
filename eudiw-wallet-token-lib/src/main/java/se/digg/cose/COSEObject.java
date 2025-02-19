@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: 2024 IDsec Solutions AB
+// SPDX-FileCopyrightText: 2016-2024 COSE-JAVA
+// SPDX-FileCopyrightText: 2025 IDsec Solutions AB
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-package se.idsec.cose;
+package se.digg.cose;
 
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
@@ -11,9 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The COSEObject class provides a common class that all of the COSE message classes
- * inherit from.  It provides the function used for decoding all of the known
- * messages.
+ * The COSEObject class provides a common class that all of the COSE message classes inherit from.
+ * It provides the function used for decoding all of the known messages.
  *
  * @author jimsch
  */
@@ -41,23 +41,23 @@ public abstract class COSEObject extends Attribute {
   protected byte[] rgbContent = null;
 
   /**
-   * Decode a COSE message object.  This function assumes that the message
-   * has a leading CBOR tag to identify the message type.  If this is not
-   * true then use {#link DecodeFromBytes(byte[], COSEObjectTag)}.
+   * Decode a COSE message object. This function assumes that the message has a leading CBOR tag to
+   * identify the message type. If this is not true then use {#link DecodeFromBytes(byte[],
+   * COSEObjectTag)}.
    *
    * @param rgbData byte stream to be decoded
    * @return the decoded message object
    * @throws CoseException on a decode failure
    */
   public static COSEObject DecodeFromBytes(byte[] rgbData)
-    throws CoseException {
+      throws CoseException {
     return DecodeFromBytes(rgbData, COSEObjectTag.Unknown);
   }
 
   /**
-   * Decode a COSE message object. Use a value of {@code COSEObjectTag.Unknown}
-   * to decode a generic structure with tagging.  Use a specific value if
-   * the tagging is absent or if a known structure is passed in.
+   * Decode a COSE message object. Use a value of {@code COSEObjectTag.Unknown} to decode a generic
+   * structure with tagging. Use a specific value if the tagging is absent or if a known structure
+   * is passed in.
    *
    * @param rgbData byte stream to be decoded
    * @param defaultTag assumed message type to be decoded
@@ -65,30 +65,24 @@ public abstract class COSEObject extends Attribute {
    * @throws CoseException on a decode failure.
    */
   public static COSEObject DecodeFromBytes(
-    byte[] rgbData,
-    COSEObjectTag defaultTag
-  ) throws CoseException {
+      byte[] rgbData,
+      COSEObjectTag defaultTag) throws CoseException {
     CBORObject messageObject = CBORObject.DecodeFromBytes(rgbData);
 
-    if (messageObject.getType() != CBORType.Array) throw new CoseException(
-      "COSEObject is not a COSE security COSEObject"
-    );
+    if (messageObject.getType() != CBORType.Array)
+      throw new CoseException(
+          "COSEObject is not a COSE security COSEObject");
 
     if (messageObject.isTagged()) {
-      if (messageObject.GetAllTags().length != 1) throw new CoseException(
-        "Malformed message - too many tags"
-      );
+      if (messageObject.GetAllTags().length != 1)
+        throw new CoseException(
+            "Malformed message - too many tags");
 
       if (defaultTag == COSEObjectTag.Unknown) {
         defaultTag = COSEObjectTag.FromInt(
-          messageObject.getMostInnerTag().ToInt32Unchecked()
-        );
-      } else if (
-        defaultTag !=
-        COSEObjectTag.FromInt(
-          messageObject.getMostInnerTag().ToInt32Unchecked()
-        )
-      ) {
+            messageObject.getMostInnerTag().ToInt32Unchecked());
+      } else if (defaultTag != COSEObjectTag.FromInt(
+          messageObject.getMostInnerTag().ToInt32Unchecked())) {
         throw new CoseException("Passed in tag does not match actual tag");
       }
     }
@@ -98,8 +92,7 @@ public abstract class COSEObject extends Attribute {
     switch (defaultTag) {
       case Unknown: // Unknown
         throw new CoseException(
-          "COSEObject was not tagged and no default tagging option given"
-        );
+            "COSEObject was not tagged and no default tagging option given");
       case Encrypt:
         msg = new EncryptCOSEObject();
         break;
@@ -120,21 +113,17 @@ public abstract class COSEObject extends Attribute {
         break;
       default:
         throw new CoseException(
-          "COSEObject is not recognized as a COSE security Object"
-        );
+            "COSEObject is not recognized as a COSE security Object");
     }
 
     msg.DecodeFromCBORObject(messageObject);
 
     CBORObject countersignature = msg.findAttribute(
-      HeaderKeys.CounterSignature,
-      UNPROTECTED
-    );
+        HeaderKeys.CounterSignature,
+        UNPROTECTED);
     if (countersignature != null) {
-      if (
-        (countersignature.getType() != CBORType.Array) ||
-        (countersignature.getValues().isEmpty())
-      ) {
+      if ((countersignature.getType() != CBORType.Array) ||
+          countersignature.getValues().isEmpty()) {
         throw new CoseException("Invalid countersignature attribute");
       }
 
@@ -145,34 +134,31 @@ public abstract class COSEObject extends Attribute {
           }
 
           CounterSign cs = new CounterSign(obj);
-          cs.setObject(msg);
           msg.addCountersignature(cs);
         }
       } else {
         CounterSign cs = new CounterSign(countersignature);
-        cs.setObject(msg);
         msg.addCountersignature(cs);
       }
     }
 
     countersignature = msg.findAttribute(
-      HeaderKeys.CounterSignature0,
-      UNPROTECTED
-    );
+        HeaderKeys.CounterSignature0,
+        UNPROTECTED);
     if (countersignature != null) {
       if (countersignature.getType() != CBORType.ByteString) {
         throw new CoseException("Invalid Countersignature0 attribute");
       }
 
       CounterSign1 cs = new CounterSign1(countersignature.GetByteString());
-      cs.setObject(msg);
       msg.counterSign1 = cs;
     }
     return msg;
   }
 
   /**
-   * Encode the message to a byte array.  This function will force cryptographic operations to be executed as needed.
+   * Encode the message to a byte array. This function will force cryptographic operations to be
+   * executed as needed.
    *
    * @return byte encoded object
    * @throws CoseException Internal COSE Exception
@@ -182,18 +168,20 @@ public abstract class COSEObject extends Attribute {
   }
 
   /**
-   * Given a CBOR tree, parse the message.  This is an abstract function that is implemented for each different supported COSE message.
+   * Given a CBOR tree, parse the message. This is an abstract function that is implemented for each
+   * different supported COSE message.
    *
    * @param messageObject CBORObject to be converted to a message.
    * @throws CoseException Internal COSE Exception
    */
 
   protected abstract void DecodeFromCBORObject(CBORObject messageObject)
-    throws CoseException;
+      throws CoseException;
 
   /**
-   * Encode the COSE message object to a CBORObject tree.  This function call will force cryptographic operations to be executed as needed.
-   * This is an internal function, as such it does not add the tag on the front and is implemented on a per message object.
+   * Encode the COSE message object to a CBORObject tree. This function call will force
+   * cryptographic operations to be executed as needed. This is an internal function, as such it
+   * does not add the tag on the front and is implemented on a per message object.
    *
    * @return CBORObject representing the message.
    * @throws CoseException Internal COSE Exception
@@ -201,7 +189,8 @@ public abstract class COSEObject extends Attribute {
   protected abstract CBORObject EncodeCBORObject() throws CoseException;
 
   /**
-   * Encode the COSE message object to a CBORObject tree.  This function call will force cryptographic operations to be executed as needed.
+   * Encode the COSE message object to a CBORObject tree. This function call will force
+   * cryptographic operations to be executed as needed.
    *
    * @return CBORObject representing the message.
    * @throws CoseException Internal COSE Exception
@@ -212,7 +201,7 @@ public abstract class COSEObject extends Attribute {
     obj = EncodeCBORObject();
 
     if (emitTag) {
-      obj = CBORObject.FromObjectAndTag(obj, coseObjectTag.value);
+      obj = CBORObject.FromCBORObjectAndTag(obj, coseObjectTag.value);
     }
 
     return obj;
@@ -237,8 +226,8 @@ public abstract class COSEObject extends Attribute {
   }
 
   /**
-   * Set the content bytes of the message.  If the message was transmitted with
-   * detached content, this must be called before doing cryptographic processing on the message.
+   * Set the content bytes of the message. If the message was transmitted with detached content,
+   * this must be called before doing cryptographic processing on the message.
    *
    * @param rgbData bytes to set as the content
    */
@@ -247,7 +236,8 @@ public abstract class COSEObject extends Attribute {
   }
 
   /**
-   * Set the content bytes as a text string.  The string will be encoded using UTF8 into a byte string.
+   * Set the content bytes as a text string. The string will be encoded using UTF8 into a byte
+   * string.
    *
    * @param strData string to set as the content
    */
@@ -279,10 +269,9 @@ public abstract class COSEObject extends Attribute {
       if (counterSignList.size() == 1) {
         counterSignList.get(0).sign(rgbProtected, rgbContent);
         addAttribute(
-          HeaderKeys.CounterSignature,
-          counterSignList.get(0).EncodeToCBORObject(),
-          Attribute.UNPROTECTED
-        );
+            HeaderKeys.CounterSignature,
+            counterSignList.get(0).EncodeToCBORObject(),
+            Attribute.UNPROTECTED);
       } else {
         CBORObject list = CBORObject.NewArray();
         for (CounterSign sig : counterSignList) {
@@ -296,10 +285,9 @@ public abstract class COSEObject extends Attribute {
     if (counterSign1 != null) {
       counterSign1.sign(rgbProtected, rgbContent);
       addAttribute(
-        HeaderKeys.CounterSignature0,
-        counterSign1.EncodeToCBORObject(),
-        Attribute.UNPROTECTED
-      );
+          HeaderKeys.CounterSignature0,
+          counterSign1.EncodeToCBORObject(),
+          Attribute.UNPROTECTED);
     }
   }
 

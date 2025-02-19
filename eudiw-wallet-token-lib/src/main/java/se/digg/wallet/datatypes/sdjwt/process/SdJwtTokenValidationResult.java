@@ -5,11 +5,12 @@
 package se.digg.wallet.datatypes.sdjwt.process;
 
 import com.nimbusds.jose.Payload;
-import lombok.*;
+import java.util.List;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import se.digg.wallet.datatypes.common.TokenValidationResult;
 import se.digg.wallet.datatypes.sdjwt.data.SdJwt;
-
-import java.util.List;
 
 /**
  * Extended validation results for SdJwt validation
@@ -18,8 +19,13 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class SdJwtTokenValidationResult extends TokenValidationResult {
+
+  /** The parsed validated token */
   private SdJwt vcToken;
+  /** The payload with disclosed data */
   private Payload disclosedTokenPayload;
+  /** true if the token supports wallet key binding */
   private boolean keyBindingProtection;
+  /** the audience declared in the token */
   private List<String> audience;
 }

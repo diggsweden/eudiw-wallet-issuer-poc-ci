@@ -11,11 +11,17 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
 import com.upokecenter.numbers.EInteger;
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -24,10 +30,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+import javax.crypto.KeyAgreement;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.wallet.datatypes.common.TokenSigningAlgorithm;
-import se.idsec.cose.*;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
+import org.bouncycastle.crypto.params.HKDFParameters;
+import se.digg.cose.AlgorithmID;
+import se.digg.cose.Attribute;
+import se.digg.cose.COSEKey;
+import se.digg.cose.CoseException;
+import se.digg.cose.HeaderKeys;
+import se.digg.cose.MAC0COSEObject;
+import se.digg.cose.Sign1COSEObject;
 
 /**
  * Utility class for handling CBOR (Concise Binary Object Representation) encoding,
@@ -36,8 +50,18 @@ import se.idsec.cose.*;
  * data into JSON or other formats. The utility also provides a signing mechanism
  * for CBOR data using a COSE-based signing process.
  */
+@SuppressWarnings("PMD.CollapsibleIfStatements")
 @Slf4j
 public class CBORUtils {
+
+  /**
+   * Utility class for handling CBOR (Concise Binary Object Representation) operations.
+   * This class is designed to provide helper methods for processing and managing CBOR data,
+   * ensuring consistency and facilitating interactions with CBOR-encoded structures.
+   *
+   * This class is not intended to be instantiated. It provides only static utility methods for usage.
+   */
+  private CBORUtils() {}
 
   /** ObjectMapper for parsing serializing objects to CBOR */
   public static final ObjectMapper CBOR_MAPPER;
@@ -143,9 +167,8 @@ public class CBORUtils {
    *
    * @param cborBytes the byte array containing CBOR-encoded data
    * @return the JSON string representation of the CBOR data
-   * @throws IOException if an error occurs during CBOR decoding
    */
-  public static String cborToJson(byte[] cborBytes) throws IOException {
+  public static String cborToJson(byte[] cborBytes) {
     // Decode CBOR bytes to a CBOR object
     CBORObject cborObject = CBORObject.DecodeFromBytes(cborBytes);
     if (cborObject.isTagged()) {
@@ -178,7 +201,27 @@ public class CBORUtils {
       .writeValueAsString(objectMapper.readValue(jsonString, Object.class));
   }
 
-  public static Sign1COSEObject sign(byte[] toBeSigned, COSEKey key, AlgorithmID algorithmID, String kid, List<X509Certificate> chain, boolean protectedKid) throws IOException, CoseException, CertificateEncodingException {
+  /**
+   * Signs the provided data using the specified key and algorithm, producing a Sign1 COSE signature.
+   *
+   * @param toBeSigned the byte array representing the content to be signed
+   * @param key the COSEKey used for signing the content
+   * @param algorithmID the algorithm identifier specifying the signing algorithm
+   * @param kid the key identifier to be added to the COSE header, or null if not applicable
+   * @param chain a list of X509Certificates representing the certificate chain to be added to the COSE header, or null if not applicable
+   * @param protectedKid a flag indicating whether the key identifier should be placed in the protected header
+   * @return a Sign1COSEObject representing the signed content with associated headers
+   * @throws CoseException if an error occurs during the COSE signing process
+   * @throws CertificateEncodingException if an encoding error occurs with the provided certificates
+   */
+  public static Sign1COSEObject sign(
+    byte[] toBeSigned,
+    COSEKey key,
+    AlgorithmID algorithmID,
+    String kid,
+    List<X509Certificate> chain,
+    boolean protectedKid
+  ) throws CoseException, CertificateEncodingException {
     Sign1COSEObject coseSignature = new Sign1COSEObject(false);
     coseSignature.SetContent(toBeSigned);
     coseSignature.addAttribute(
@@ -213,5 +256,106 @@ public class CBORUtils {
     return coseSignature;
   }
 
+  public static MAC0COSEObject deviceComputedMac(byte[] deviceAuthenticationBytes, PrivateKey privateKey, PublicKey publicKey) throws GeneralSecurityException, CoseException {
+    byte[] sharedSecret = deriveSharedSecret(privateKey, publicKey);
+    MAC0COSEObject mac0COSEObject = new MAC0COSEObject();
+    mac0COSEObject.addAttribute(
+      HeaderKeys.Algorithm,
+      AlgorithmID.HMAC_SHA_256.AsCBOR(),
+      Attribute.PROTECTED);
+      mac0COSEObject.SetContent(deviceAuthenticationBytes);
+    byte[] macKey = deriveEMacKey(sharedSecret, deviceAuthenticationBytes);
+    mac0COSEObject.Create(macKey);
+    return mac0COSEObject;
+  }
+
+  /**
+   * Derives the EMacKey using the HKDF function as defined in RFC 5869.
+   *
+   * @param zab input keying material (IKM) as byte array.
+   * @param sessionTranscriptBytes session transcript bytes to be hashed with SHA-256 as salt
+   * @return A 32-byte EMacKey derived from HKDF.
+   */
+  public static byte[] deriveEMacKey(byte[] zab, byte[] sessionTranscriptBytes) {
+    // Step 1: Create salt as SHA-256(sessionTranscriptBytes)
+    SHA256Digest sha256Digest = new SHA256Digest(); // Use BouncyCastle's Digest
+    byte[] salt = hash(sha256Digest, sessionTranscriptBytes);
+
+    // Step 2: Define the info parameter as "EMacKey" encoded in UTF-8
+    byte[] info = "EMacKey".getBytes(StandardCharsets.UTF_8);
+
+    // Step 3: Setup HKDF parameters with SHA-256 hash, IKM, salt, and info.
+    HKDFParameters hkdfParameters = new HKDFParameters(zab, salt, info);
+
+    // Step 4: Create the HKDF generator
+    HKDFBytesGenerator hkdfGenerator = new HKDFBytesGenerator(sha256Digest);
+
+    // Step 5: Initialize the generator with our parameters
+    hkdfGenerator.init(hkdfParameters);
+
+    // Step 6: Generate the key (L = 32 bytes)
+    byte[] eMacKey = new byte[32];
+    hkdfGenerator.generateBytes(eMacKey, 0, eMacKey.length);
+
+    // Return the derived EMacKey
+    return eMacKey;
+  }
+
+  /**
+   * Helper method to hash input data using a given Digest.
+   *
+   * @param digest The SHA-256 Digest instance.
+   * @param input  The input data to hash.
+   * @return The hashed result as a byte array.
+   */
+  private static byte[] hash(SHA256Digest digest, byte[] input) {
+    digest.reset();
+    digest.update(input, 0, input.length);
+    byte[] output = new byte[digest.getDigestSize()];
+    digest.doFinal(output, 0);
+    return output;
+  }
+
+
+
+  /**
+   * Derives a shared secret using Diffie-Hellman (DH) key derivation.
+   *
+   * @param privateKey The private key (either RSA or EC).
+   * @param publicKey  The public key (must be of the same type as the private key).
+   * @return A byte array representing the derived shared secret.
+   * @throws IllegalArgumentException if the keys are not of the same type or unsupported key types are provided.
+   * @throws GeneralSecurityException if key agreement fails.
+   */
+  public static byte[] deriveSharedSecret(PrivateKey privateKey, PublicKey publicKey)
+    throws GeneralSecurityException {
+    // Ensure the key types match
+    if (privateKey instanceof RSAPrivateKey || publicKey instanceof RSAPublicKey) {
+      throw new IllegalArgumentException("RSA keys cannot be used for key agreement (DH). Use EC keys instead.");
+    } else if (privateKey instanceof ECPrivateKey && publicKey instanceof ECPublicKey) {
+      return deriveECSharedSecret((ECPrivateKey) privateKey, (ECPublicKey) publicKey);
+    } else {
+      throw new IllegalArgumentException("Key types do not match or are unsupported. Use RSA or EC keys.");
+    }
+  }
+
+  /**
+   * Derives a shared secret using EC keys.
+   *
+   * @param privateKey The EC private key.
+   * @param publicKey  The EC public key.
+   * @return A byte array representing the derived shared secret.
+   * @throws GeneralSecurityException if key agreement fails.
+   */
+  private static byte[] deriveECSharedSecret(ECPrivateKey privateKey, ECPublicKey publicKey)
+    throws GeneralSecurityException {
+    // Create EC Key Agreement
+    KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH", "BC");
+    keyAgreement.init(privateKey);
+    keyAgreement.doPhase(publicKey, true);
+
+    // Generate shared secret
+    return keyAgreement.generateSecret();
+  }
 
 }

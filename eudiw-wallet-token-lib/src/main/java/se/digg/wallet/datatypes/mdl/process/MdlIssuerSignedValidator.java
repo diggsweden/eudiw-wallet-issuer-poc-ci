@@ -19,10 +19,26 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
-import se.digg.wallet.datatypes.common.*;
-import se.digg.wallet.datatypes.mdl.data.*;
-import se.idsec.cose.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import se.digg.cose.COSEKey;
+import se.digg.cose.COSEObjectTag;
+import se.digg.cose.CoseException;
+import se.digg.cose.HeaderKeys;
+import se.digg.cose.Sign1COSEObject;
+import se.digg.wallet.datatypes.common.TokenDigestAlgorithm;
+import se.digg.wallet.datatypes.common.TokenParsingException;
+import se.digg.wallet.datatypes.common.TokenValidationException;
+import se.digg.wallet.datatypes.common.TokenValidator;
+import se.digg.wallet.datatypes.common.TrustedKey;
+import se.digg.wallet.datatypes.mdl.data.CBORUtils;
+import se.digg.wallet.datatypes.mdl.data.IssuerSigned;
+import se.digg.wallet.datatypes.mdl.data.IssuerSignedItem;
+import se.digg.wallet.datatypes.mdl.data.MobileSecurityObject;
 
 /**
  * Validator for validating @{link {@link IssuerSigned} tokens.
@@ -30,13 +46,13 @@ import se.idsec.cose.*;
  * This is then completed in the Wallet to produce a complete verifiable credential presentation in the form of a mDoc
  *
  * <p>
- *   The user attributes in the IssuerSigned object is not masked, but individually signed by the signature.
- *   Selective disclosure is achieved by deleting the attributes that should not be revealed from this token.
- *   This then does not break the signature.
+ * The user attributes in the IssuerSigned object is not masked, but individually signed by the signature.
+ * Selective disclosure is achieved by deleting the attributes that should not be revealed from this token.
+ * This then does not break the signature.
  * </p>
  *
  * <p>
- *   Validation of an IssuerSigned token includes the following steps.
+ * Validation of an IssuerSigned token includes the following steps.
  * </p>
  *
  * <ul>
@@ -69,7 +85,7 @@ public class MdlIssuerSignedValidator implements TokenValidator {
   /**
    * Validates an IssuerSigned token issued by a EUDI wallet PID issuer or attestation issuer
    *
-   * @param token the CBOR encoded token to be validated as a byte array.
+   * @param token       the CBOR encoded token to be validated as a byte array.
    * @param trustedKeys optional list of trusted keys used for validation.
    * @return TokenValidationResult containing information about the validated token
    * @throws TokenValidationException if there are any failures during the token validation process
@@ -167,8 +183,8 @@ public class MdlIssuerSignedValidator implements TokenValidator {
    *
    * @param mso the MobileSecurityObject to validate
    * @throws TokenValidationException if the MobileSecurityObject does not contain validity information,
-   * the signing time is not declared, the valid from time is not declared, the expiration time is not declared,
-   * the token declares signing time in the future, the token is not yet valid, or the token has expired
+   *                                  the signing time is not declared, the valid from time is not declared, the expiration time is not declared,
+   *                                  the token declares signing time in the future, the token is not yet valid, or the token has expired
    */
   private void timeValidation(MobileSecurityObject mso)
     throws TokenValidationException {
@@ -211,9 +227,9 @@ public class MdlIssuerSignedValidator implements TokenValidator {
    * Validates the attributes of a MobileSecurityObject against a map of namespaces and signed items.
    *
    * @param nameSpaces a map containing namespace strings as keys and lists of IssuerSignedItems as values
-   * @param mso the MobileSecurityObject to validate the attributes against
+   * @param mso        the MobileSecurityObject to validate the attributes against
    * @throws TokenValidationException if there are validation errors during attribute validation
-   * @throws IOException if an I/O error occurs
+   * @throws IOException              if an I/O error occurs
    * @throws NoSuchAlgorithmException if a required cryptographic algorithm is not available
    */
   private void validateAttributes(
@@ -308,8 +324,8 @@ public class MdlIssuerSignedValidator implements TokenValidator {
    * Retrieves the hash value corresponding to a given name space and digest ID from the provided value digests map.
    *
    * @param valueDigests a map containing signed hash values over provided attributes
-   * @param nameSpace the provided user attributes under defined name spaces
-   * @param digestID the ID of the signed digest for which the hash value is requested
+   * @param nameSpace    the provided user attributes under defined name spaces
+   * @param digestID     the ID of the signed digest for which the hash value is requested
    * @return the byte array representing the hash value, or null if the value digests map is null, the nameSpace is not found,
    * or the digest ID is not found within the specified nameSpace
    */
@@ -331,9 +347,9 @@ public class MdlIssuerSignedValidator implements TokenValidator {
   /**
    * Retrieves the validation key required for token validation.
    *
-   * @param chain the list of X509 certificates in the signature chain
+   * @param chain                 the list of X509 certificates in the signature chain
    * @param parsedSignatureObject the parsed signature object to extract key information from
-   * @param trustedKeys the list of trusted keys to validate against or null if all keys are trusted
+   * @param trustedKeys           the list of trusted keys to validate against or null if all keys are trusted
    * @return the validation key if found or null if not found
    * @throws TokenValidationException if no validation key is found or there is a validation error
    */
@@ -375,9 +391,9 @@ public class MdlIssuerSignedValidator implements TokenValidator {
    * preferring the key from protected attributes if present or else from unprotected attributes.
    *
    * <p>
-   *   Note that the COSE standard states that KID can be stored in unprotected attributes but does not forbid
-   *   storing it in protected attributes. The reason to look in protected attributes first, is because that information
-   *   is signed and hence more trustworthy.
+   * Note that the COSE standard states that KID can be stored in unprotected attributes but does not forbid
+   * storing it in protected attributes. The reason to look in protected attributes first, is because that information
+   * is signed and hence more trustworthy.
    * </p>
    *
    * @param parsedSignatureObject the Sign1COSEObject containing the signature attributes

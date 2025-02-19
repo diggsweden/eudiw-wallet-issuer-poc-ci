@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: 2024 IDsec Solutions AB
+// SPDX-FileCopyrightText: 2016-2024 COSE-JAVA
+// SPDX-FileCopyrightText: 2025 IDsec Solutions AB
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-package se.idsec.cose;
+package se.digg.cose;
 
 import com.upokecenter.cbor.CBORObject;
 import java.util.ArrayList;
@@ -24,12 +25,14 @@ public class KeySet {
   public KeySet(CBORObject keysIn) {
     keys = new ArrayList<COSEKey>();
 
-    //  Ignore keys which we cannot deal with or are malformed.
+    // Ignore keys which we cannot deal with or are malformed.
 
     for (int i = 0; i < keysIn.size(); i++) {
       try {
         keys.add(new COSEKey(keysIn.get(i)));
-      } catch (CoseException e) {}
+      } catch (CoseException e) {
+        System.out.println("This exception should likely be logged or handled");
+      }
     }
   }
 

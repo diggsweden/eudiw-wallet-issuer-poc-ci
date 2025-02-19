@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: 2024 IDsec Solutions AB
+// SPDX-FileCopyrightText: 2016-2024 COSE-JAVA
+// SPDX-FileCopyrightText: 2025 IDsec Solutions AB
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-package se.idsec.cose;
+package se.digg.cose;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -21,16 +22,15 @@ public abstract class SignCommon extends COSEObject {
   protected String contextString;
 
   byte[] computeSignature(byte[] rgbToBeSigned, COSEKey cnKey)
-    throws CoseException {
+      throws CoseException {
     AlgorithmID alg = AlgorithmID.FromCBOR(findAttribute(HeaderKeys.Algorithm));
     return computeSignature(alg, rgbToBeSigned, cnKey);
   }
 
   static byte[] computeSignature(
-    AlgorithmID alg,
-    byte[] rgbToBeSigned,
-    COSEKey cnKey
-  ) throws CoseException {
+      AlgorithmID alg,
+      byte[] rgbToBeSigned,
+      COSEKey cnKey) throws CoseException {
     String algName = null;
     int sigLen = 0;
 
@@ -76,8 +76,8 @@ public abstract class SignCommon extends COSEObject {
     Provider provider = cnKey.getCryptoContext().getProvider();
     try {
       Signature sig = provider == null
-        ? Signature.getInstance(algName)
-        : Signature.getInstance(algName, provider);
+          ? Signature.getInstance(algName)
+          : Signature.getInstance(algName, provider);
       sig.initSign(privKey);
       sig.update(rgbToBeSigned);
       result = sig.sign();
@@ -94,7 +94,7 @@ public abstract class SignCommon extends COSEObject {
   }
 
   private static byte[] convertDerToConcat(byte[] der, int len)
-    throws CoseException {
+      throws CoseException {
     // this is far too naive
     byte[] concat = new byte[len * 2];
 
@@ -138,20 +138,18 @@ public abstract class SignCommon extends COSEObject {
   }
 
   boolean validateSignature(
-    byte[] rgbToBeSigned,
-    byte[] rgbSignature,
-    COSEKey cnKey
-  ) throws CoseException {
+      byte[] rgbToBeSigned,
+      byte[] rgbSignature,
+      COSEKey cnKey) throws CoseException {
     AlgorithmID alg = AlgorithmID.FromCBOR(findAttribute(HeaderKeys.Algorithm));
     return validateSignature(alg, rgbToBeSigned, rgbSignature, cnKey);
   }
 
   static boolean validateSignature(
-    AlgorithmID alg,
-    byte[] rgbToBeSigned,
-    byte[] rgbSignature,
-    COSEKey cnKey
-  ) throws CoseException {
+      AlgorithmID alg,
+      byte[] rgbToBeSigned,
+      byte[] rgbSignature,
+      COSEKey cnKey) throws CoseException {
     String algName = null;
     boolean convert = false;
 
@@ -197,8 +195,8 @@ public abstract class SignCommon extends COSEObject {
     boolean result = false;
     try {
       Signature sig = provider == null
-        ? Signature.getInstance(algName)
-        : Signature.getInstance(algName, provider);
+          ? Signature.getInstance(algName)
+          : Signature.getInstance(algName, provider);
       sig.initVerify(pubKey);
       sig.update(rgbToBeSigned);
 

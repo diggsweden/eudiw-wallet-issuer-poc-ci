@@ -12,15 +12,26 @@ import java.security.cert.CertificateEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.Setter;
-import se.digg.wallet.datatypes.common.*;
+import se.digg.wallet.datatypes.common.TokenAttribute;
+import se.digg.wallet.datatypes.common.TokenDigestAlgorithm;
+import se.digg.wallet.datatypes.common.TokenIssuer;
+import se.digg.wallet.datatypes.common.TokenIssuingException;
+import se.digg.wallet.datatypes.common.TokenSigningAlgorithm;
 import se.digg.wallet.datatypes.sdjwt.JSONUtils;
 import se.digg.wallet.datatypes.sdjwt.data.ClaimsWithDisclosure;
 import se.digg.wallet.datatypes.sdjwt.data.Disclosure;
 import se.digg.wallet.datatypes.sdjwt.data.SdJwt;
 import se.swedenconnect.security.credential.PkiCredential;
 
+/**
+ * A concrete implementation of the {@link TokenIssuer} interface responsible for issuing SD-JWT tokens.
+ * <p>
+ * This class handles the generation of signed (SD-JWT) tokens with selective disclosure.
+ * The implementation ensures tokens are generated in compliance with the specified signing algorithm,
+ * issuer credentials, and attributes provided in the {@link SdJwtTokenInput}. It supports customizing
+ * legacy behavior for the SD-JWT header type.
+ */
 @Setter
 public class SdJwtTokenIssuer implements TokenIssuer<SdJwtTokenInput> {
 
@@ -60,10 +71,7 @@ public class SdJwtTokenIssuer implements TokenIssuer<SdJwtTokenInput> {
       }
 
       PkiCredential issuerCredential = tokenInput.getIssuerCredential();
-      SdJwt sdJwt = SdJwt.builder(
-        tokenInput.getIssuer(),
-        digestAlgorithm
-      )
+      SdJwt sdJwt = SdJwt.builder(tokenInput.getIssuer(), digestAlgorithm)
         .legacySdJwtType(legacySdJwtHeaderType)
         .claimsWithDisclosure(claimsWithDisclosure)
         .confirmationKey(

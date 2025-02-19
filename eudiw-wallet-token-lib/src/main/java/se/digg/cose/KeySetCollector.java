@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: 2024 IDsec Solutions AB
+// SPDX-FileCopyrightText: 2016-2024 COSE-JAVA
+// SPDX-FileCopyrightText: 2025 IDsec Solutions AB
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-package se.idsec.cose;
+package se.digg.cose;
 
 import java.util.Collections;
 import java.util.Set;
@@ -29,8 +30,7 @@ public class KeySetCollector implements Collector<COSEKey, KeySet, KeySet> {
     // parallel streams are not supported
     return (acc1, acc2) -> {
       throw new UnsupportedOperationException(
-        "parallel streams are not supported"
-      );
+          "parallel streams are not supported");
     };
   }
 

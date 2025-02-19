@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: 2024 IDsec Solutions AB
+// SPDX-FileCopyrightText: 2016-2024 COSE-JAVA
+// SPDX-FileCopyrightText: 2025 IDsec Solutions AB
 //
 // SPDX-License-Identifier: BSD-3-Clause
 
-package se.idsec.cose;
+package se.digg.cose;
 
 import com.upokecenter.cbor.CBORObject;
 
@@ -64,15 +65,17 @@ public enum AlgorithmID {
   private final int cbitTag;
 
   AlgorithmID(int value, int cbitKey, int cbitTag) {
-    this.value = CBORObject.FromObject(value);
+    this.value = CBORObject.FromInt32(value);
     this.cbitKey = cbitKey;
     this.cbitTag = cbitTag;
   }
 
   public static AlgorithmID FromCBOR(CBORObject obj) throws CoseException {
-    if (obj == null) throw new CoseException("No Algorithm Specified");
-    for (AlgorithmID alg : AlgorithmID.values()) {
-      if (obj.equals(alg.value)) return alg;
+    if (obj == null)
+      throw new CoseException("No Algorithm Specified");
+    for (AlgorithmID alg : values()) {
+      if (obj.equals(alg.value))
+        return alg;
     }
     throw new CoseException("Unknown Algorithm Specified");
   }

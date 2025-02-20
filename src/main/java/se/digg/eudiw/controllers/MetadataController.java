@@ -180,7 +180,7 @@ public class MetadataController {
                         .doctype("eu.europa.ec.eudi.pid.1")
                         .scope("eu.europa.ec.eudi.pid.1")
                         .credentialSigningAlgValuesSupported(List.of("ES256"))
-                        .cryptographicBindingMethodsSupported(List.of("jwk"))
+                        .cryptographicBindingMethodsSupported(List.of("jwk", "cose_key"))
                         .proofType("jwt", ProofTypeWrapper.createProofType(List.of("ES256")))
                         .display(List.of(
                                 Display.builder()

@@ -158,7 +158,7 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
         MdlTokenIssuer tokenIssuer = new MdlTokenIssuer(true);
 
         byte[] token = tokenIssuer.issueToken(tokenInput);
-        String mdlToken = Base64.getEncoder().encodeToString(token);
+        String mdlToken = Base64.getUrlEncoder().encodeToString(token);
 
         logger.info("mdl token {}", mdlToken);
         return mdlToken;

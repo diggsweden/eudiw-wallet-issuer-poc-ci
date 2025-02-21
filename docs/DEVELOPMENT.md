@@ -59,19 +59,19 @@ The DemoTestsController can not run in compose.
 
 ## Build
 
-Currently, a few of the projects mvn package deps is hosted on GitHub.
+<!-- Currently, a few of the projects mvn package deps is hosted on GitHub.
 GitHub's mvn repo needs an access token even on public packages.
-Configure the 'development/maven-gh-settings.xml' and set your GitHub-access token there.
+Configure the 'development/maven-gh-settings.xml' and set your GitHub-access token there. -->
 
 ```shell
-mvn -s development/maven-gh-settings.xml clean verify
+mvn clean verify
 ```
 
 ## VSCode
 
-Go to Preferences > Settings > Workspace
+<!-- Go to Preferences > Settings > Workspace
 Search 'maven'
-Set 'Java > Configuration > Maven: User Settings' to development/maven-gh-settings.xml to make VSCode use the local settings
+Set 'Java > Configuration > Maven: User Settings' to development/maven-gh-settings.xml to make VSCode use the local settings -->
 
 ## Tag and Release a new version
 

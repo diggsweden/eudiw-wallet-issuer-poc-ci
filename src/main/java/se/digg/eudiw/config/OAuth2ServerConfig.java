@@ -18,6 +18,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -45,6 +47,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
+import se.digg.eudiw.service.OidcUserInfoService;
 import se.digg.eudiw.service.OpenIdFederationService;
 import se.digg.eudiw.service.ParCacheService;
 
@@ -60,6 +63,9 @@ public class OAuth2ServerConfig {
 
   @Autowired
   EudiwSessionSecurityContextRepository contextRepository;
+
+  @Autowired
+  OidcUserInfoService oidcUserInfoService;
 
   @Autowired
   private EudiwConfig config;
@@ -95,7 +101,7 @@ public class OAuth2ServerConfig {
             .with(authorizationServerConfigurer, (authorizationServer) ->
                     authorizationServer
                             .registeredClientRepository(registeredClientRepository)
-                            .tokenGenerator(tokenGenerator())
+                            .tokenGenerator(tokenGenerator(oidcUserInfoService))
                             .oidc(oidc -> oidc
                                     .providerConfigurationEndpoint(providerConfigurationEndpoint ->
                                             providerConfigurationEndpoint.providerConfigurationCustomizer(builder -> builder
@@ -162,12 +168,17 @@ public class OAuth2ServerConfig {
                             authorizeRequests
                                     .requestMatchers("/favicon.ico").permitAll()
                                     .requestMatchers("/.well-known/**").permitAll()
+                                    .requestMatchers("/").permitAll()
+                                    .requestMatchers("/index.html").permitAll()
+                                    .requestMatchers("/images/**").permitAll()
                                     .requestMatchers("/cert/**").permitAll()
                                     .requestMatchers("/actuator/**").permitAll()
                                     .requestMatchers("/v3/api-docs/**").permitAll()
                                     .requestMatchers("/error**").permitAll()
                                     .requestMatchers("/login*").permitAll()
                                     .requestMatchers("/demo-credential").permitAll()
+                                    .requestMatchers("/pid").permitAll()
+                                    .requestMatchers("/pid/preauth").permitAll()
                                     .requestMatchers("/demo-oidfed-client").authenticated()
                                     .requestMatchers("/credential").authenticated() //hasAuthority("SCOPE_VerifiablePortableDocumentA1")
                                     .requestMatchers("/credential_offer").hasAuthority("SCOPE_VerifiablePortableDocumentA1")
@@ -304,13 +315,27 @@ public class OAuth2ServerConfig {
   }
 
   @Bean
-  public OAuth2TokenGenerator<?> tokenGenerator() {
+  public OAuth2TokenGenerator<?> tokenGenerator(OidcUserInfoService oidcUserInfoService) {
     JwtEncoder jwtEncoder = new NimbusJwtEncoder(jwkSource());
     EudiwJwtGenerator jwtGenerator = new EudiwJwtGenerator(jwtEncoder);
+    jwtGenerator.setJwtCustomizer(tokenCustomizer(oidcUserInfoService));
     OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
     OAuth2RefreshTokenGenerator refreshTokenGenerator = new OAuth2RefreshTokenGenerator();
     return new DelegatingOAuth2TokenGenerator(
             jwtGenerator, accessTokenGenerator, refreshTokenGenerator);
+  }
+
+  @Bean
+  public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer(
+          OidcUserInfoService userInfoService) {
+    return (context) -> {
+      if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
+        OidcUserInfo userInfo = userInfoService.loadUser(
+                context.getPrincipal().getName());
+        context.getClaims().claims(claims ->
+                claims.putAll(userInfo.getClaims()));
+      }
+    };
   }
 
   @Bean

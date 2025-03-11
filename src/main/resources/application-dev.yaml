@@ -37,8 +37,10 @@ spring:
             certificate: "file:../eudiw-prototype/sc-environment/config/common/tls.crt"
 
 eudiw:
-  issuer: https://local.dev.swedenconnect.se:9090
-  issuerBaseUrl: https://local.dev.swedenconnect.se:9090
+  issuer: https://wallet.sandbox.digg.se
+    #https://local.dev.swedenconnect.se:9090
+  issuerBaseUrl: https://wallet.sandbox.digg.se
+  #https://local.dev.swedenconnect.se:9090
   authHost: https://local.dev.swedenconnect.se:9090
   credentialHost: https://local.dev.swedenconnect.se:9090
   expHours: 24

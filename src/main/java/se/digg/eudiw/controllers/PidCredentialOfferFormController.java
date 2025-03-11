@@ -20,6 +20,9 @@ import se.digg.eudiw.model.CredentialOfferFormParam;
 import se.digg.eudiw.model.credentialissuer.AuthorizationCodeGrant;
 import se.digg.eudiw.model.credentialissuer.CredentialOfferParam;
 import se.digg.eudiw.model.credentialissuer.GrantType;
+import se.digg.eudiw.util.IssuerStateBuilder;
+import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.bundle.CredentialBundles;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,9 +37,12 @@ public class PidCredentialOfferFormController {
 
     private static final Logger logger = LoggerFactory.getLogger(PidCredentialOfferFormController.class);
     private final EudiwConfig eudiwConfig;
+    private final PkiCredential issuerCredential;
 
-    public PidCredentialOfferFormController(EudiwConfig eudiwConfig) {
+    public PidCredentialOfferFormController(EudiwConfig eudiwConfig, CredentialBundles credentialBundles) {
         this.eudiwConfig = eudiwConfig;
+        issuerCredential = credentialBundles.getCredential("issuercredential");
+
     }
 
     @GetMapping("/pid")
@@ -80,7 +86,10 @@ credential_offer?credential_offer=
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
 
             CredentialOfferParam credentialOfferParam = new CredentialOfferParam(eudiwConfig.getIssuer(), credentialOffer.listOfCredentials());
-            credentialOfferParam.setGrants(Map.of(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeGrant()));
+            IssuerStateBuilder issuerStateBuilder = new IssuerStateBuilder(eudiwConfig.getIssuer(), issuerCredential);
+            issuerStateBuilder.withCredentialOfferId(UUID.randomUUID().toString());
+
+            credentialOfferParam.setGrants(Map.of(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeGrant(issuerStateBuilder.build(), null)));
 
             String jsonData = null;
             try {

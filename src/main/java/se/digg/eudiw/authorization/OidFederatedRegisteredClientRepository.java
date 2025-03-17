@@ -61,7 +61,7 @@ public class OidFederatedRegisteredClientRepository implements RegisteredClientR
 
     private RegisteredClient buildRegisteredClient(String clientId) {
 
-        WalletOAuthClientMetadata metadata = openIdFederationService.resolveWallet(clientId);
+        //WalletOAuthClientMetadata metadata = openIdFederationService.resolveWallet(clientId);
 
         MessageDigest digest = null;
         try {

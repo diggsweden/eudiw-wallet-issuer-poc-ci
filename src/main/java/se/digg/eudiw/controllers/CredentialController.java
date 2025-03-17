@@ -73,26 +73,26 @@ public class CredentialController {
                 Optional<JWK> proofJwk = proofDecoder.decodeJwtProf(credential.getProof());
 
                 // get registered wallet proof public key from federation
-                String clientId = jwt.getClaim("clientId");
-                WalletOAuthClientMetadata walletOAuthClientMetadata = openIdFederationService.resolveWallet(clientId);
-                Optional<JWK> jwk;
-                if (walletOAuthClientMetadata != null) {
-                    jwk = walletOAuthClientMetadata.getJwkSet().getKeys().stream().findFirst();
-                } else {
-                    jwk = Optional.empty();
-                }
-
-                if (jwk.isPresent() && proofJwk.isPresent()) {
-                    // TODO verify device proof is present in federation
-                    try {
-                        logger.info("Compare proof key with clientId: {} registered key in federation thumbprint: {} device proof thumbprint: {}",
-                                clientId,
-                                jwk.get().computeThumbprint(),
-                                proofJwk.get().computeThumbprint());
-                    } catch (JOSEException e) {
-                        logger.info("Compare proof key with clientId: {} registered key in federation", clientId);
-                    }
-                }
+//                String clientId = jwt.getClaim("clientId");
+//                WalletOAuthClientMetadata walletOAuthClientMetadata = openIdFederationService.resolveWallet(clientId);
+//                Optional<JWK> jwk;
+//                if (walletOAuthClientMetadata != null) {
+//                    jwk = walletOAuthClientMetadata.getJwkSet().getKeys().stream().findFirst();
+//                } else {
+//                    jwk = Optional.empty();
+//                }
+//
+//                if (jwk.isPresent() && proofJwk.isPresent()) {
+//                    // TODO verify device proof is present in federation
+//                    try {
+//                        logger.info("Compare proof key with clientId: {} registered key in federation thumbprint: {} device proof thumbprint: {}",
+//                                clientId,
+//                                jwk.get().computeThumbprint(),
+//                                proofJwk.get().computeThumbprint());
+//                    } catch (JOSEException e) {
+//                        logger.info("Compare proof key with clientId: {} registered key in federation", clientId);
+//                    }
+//                }
 
                 if (proofJwk.isEmpty()) throw new TokenIssuingException("Missing valid proof");
 
@@ -105,9 +105,11 @@ public class CredentialController {
                         )
                 );
             }
-        } catch (ParseException parseException) {
-            throw new TokenIssuingException("Could not parse proof jwk");
-        } catch (HttpClientErrorException.BadRequest badRequest) {
+        }
+        //catch (ParseException parseException) {
+        //    throw new TokenIssuingException("Could not parse proof jwk");
+        //}
+        catch (HttpClientErrorException.BadRequest badRequest) {
             logger.error("Bad request", badRequest);
             throw badRequest;
         }

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.model.credentialissuer.CredentialFormatEnum;
 import se.digg.wallet.datatypes.common.*;
@@ -17,16 +18,11 @@ import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 
 import java.security.PublicKey;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.time.*;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 @Service
 public class CredentialIssuerServiceImpl implements CredentialIssuerService {
@@ -56,6 +52,41 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
     }
 
     private String sdJwtVcCredential(String credentialType, JWK deviceProofPublicKey, Jwt jwt) throws TokenIssuingException {
+
+        List<TokenAttribute> tokenAttributes = new ArrayList<>(Arrays.asList(
+                TokenAttribute.builder().type(new TokenAttributeType("given_name")).value(jwt.getClaim("givenName")).build(),
+                TokenAttribute.builder().type(new TokenAttributeType("last_name")).value(jwt.getClaim("surname")).build(),
+                TokenAttribute.builder().type(new TokenAttributeType("family_name")).value(jwt.getClaim("surname")).build(),
+                TokenAttribute.builder().type(new TokenAttributeType("issuance_date")).value(new Date()).build(),
+                TokenAttribute.builder().type(new TokenAttributeType("issuing_country")).value("SE").build(),
+                TokenAttribute.builder().type(new TokenAttributeType("issuing_authority")).value("DIGG").build(),
+                TokenAttribute.builder().type(new TokenAttributeType("expiry_date")).value(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours()))).build() // TODO
+        ));
+        String birthDate = jwt.getClaim("birthDate");
+        if (!StringUtils.hasText(birthDate) && birthDate != null) {
+            tokenAttributes.add(
+                    TokenAttribute.builder().type(
+                            new TokenAttributeType("birth_date"))
+                            .value(birthDate).build()
+            );
+
+            try {
+                int ageInYears = ageInYears(birthDate);
+                tokenAttributes.addAll(
+                        List.of(
+                            TokenAttribute.builder().type(new TokenAttributeType("age_over_15")).value(ageInYears >= 15).build(),
+                            TokenAttribute.builder().type(new TokenAttributeType("age_over_16")).value(ageInYears >=  16).build(),
+                            TokenAttribute.builder().type(new TokenAttributeType("age_over_18")).value(ageInYears >=  18).build(),
+                            TokenAttribute.builder().type(new TokenAttributeType("age_over_20")).value(ageInYears >=  20).build(),
+                            TokenAttribute.builder().type(new TokenAttributeType("age_over_65")).value(ageInYears >=  65).build(),
+                            TokenAttribute.builder().type(new TokenAttributeType("age_in_years")).value(ageInYears).build()
+                        )
+                );
+            } catch (RuntimeException e) {
+                logger.warn("Could not calculate age in years from {}", birthDate, e);
+            }
+        }
+
         TokenIssuer<SdJwtTokenInput> tokenIssuer = new SdJwtTokenIssuer();
         SdJwtTokenInput sdJwtTokenInput = new SdJwtTokenInput();
         sdJwtTokenInput.setIssuer(eudiwConfig.getIssuer());
@@ -63,18 +94,7 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
         sdJwtTokenInput.setAlgorithm(TokenSigningAlgorithm.ECDSA_256);
         sdJwtTokenInput.setIssuerCredential(issuerCredential);
         sdJwtTokenInput.setWalletPublicKey(issuerCredential.getPublicKey());
-        sdJwtTokenInput.setAttributes(Stream.of(
-                TokenAttribute.builder().type(new TokenAttributeType("given_name")).value(jwt.getClaim("givenName")).build(),
-                TokenAttribute.builder().type(new TokenAttributeType("last_name")).value(jwt.getClaim("surname")).build(),
-                TokenAttribute.builder().type(new TokenAttributeType("issuance_date")).value(new Date()).build(),
-                TokenAttribute.builder().type(new TokenAttributeType("age_over_18")).value(Boolean.TRUE).build(),
-                TokenAttribute.builder().type(new TokenAttributeType("issuing_country")).value("SE").build(),
-                TokenAttribute.builder().type(new TokenAttributeType("issuing_authority")).value("DIGG").build(),
-                TokenAttribute.builder().type(new TokenAttributeType("birth_date")).value("19121212").build(),
-                TokenAttribute.builder().type(new TokenAttributeType("expiry_date")).value(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours()))).build() // TODO
-
-
-        ).filter(item -> item.getValue() != null).toList());
+        sdJwtTokenInput.setAttributes(tokenAttributes);
         sdJwtTokenInput.setExpirationDuration(Duration.ofHours(eudiwConfig.getExpHours()));
 
 
@@ -93,7 +113,7 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
 
     private String msoMdocCredential(String credentialType, JWK deviceProofPublicKey, Jwt jwt) throws TokenIssuingException {
 
-        List<TokenAttribute> tokenAttributes = List.of(
+        List<TokenAttribute> tokenAttributes = new ArrayList<>(Arrays.asList(
                 TokenAttribute.builder()
                         .type(new TokenAttributeType(
                                 TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
@@ -111,18 +131,7 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
                 TokenAttribute.builder()
                         .type(new TokenAttributeType(
                                 TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
-                                "birth_date")).value(jwt.getClaim("birthDate")).build(),
-                TokenAttribute.builder()
-                        .type(new TokenAttributeType(
-                                TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
                                 "issuance_date")).value(new Date()).build(),
-
-                TokenAttribute.builder()
-                        .type(new TokenAttributeType(
-                                TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
-                                "age_over_18"))
-                        .value(true) // TODO
-                        .build(),
                 TokenAttribute.builder()
                         .type(new TokenAttributeType(
                                 TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
@@ -135,7 +144,61 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
                                 "issuing_authority"))
                         .value("Test PID issuer")
                         .build()
-        );
+        ));
+
+        String birthDate = jwt.getClaim("birthDate");
+        if (!StringUtils.hasText(birthDate) && birthDate != null) {
+            tokenAttributes.add(
+                    TokenAttribute.builder()
+                            .type(new TokenAttributeType(
+                                    TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                    "birth_date")).value(jwt.getClaim("birthDate")).build()
+            );
+            try {
+                int ageInYears = ageInYears(birthDate);
+                tokenAttributes.addAll(List.of(
+                        TokenAttribute.builder()
+                                .type(new TokenAttributeType(
+                                        TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                        "age_over_15"))
+                                .value(ageInYears >= 15)
+                                .build(),
+                        TokenAttribute.builder()
+                                .type(new TokenAttributeType(
+                                        TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                        "age_over_16"))
+                                .value(ageInYears >= 16)
+                                .build(),
+                        TokenAttribute.builder()
+                                .type(new TokenAttributeType(
+                                        TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                        "age_over_18"))
+                                .value(ageInYears >= 18)
+                                .build(),
+                        TokenAttribute.builder()
+                                .type(new TokenAttributeType(
+                                        TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                        "age_over_20"))
+                                .value(ageInYears >= 20)
+                                .build(),
+                        TokenAttribute.builder()
+                                .type(new TokenAttributeType(
+                                        TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                        "age_over_65"))
+                                .value(ageInYears >= 65)
+                                .build(),
+                        TokenAttribute.builder()
+                                .type(new TokenAttributeType(
+                                        TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                        "age_in_years"))
+                                .value(ageInYears)
+                                .build()
+                ));
+            }
+            catch (RuntimeException e) {
+                logger.warn("Could not calculate age in years from {}", birthDate, e);
+            }
+        }
 
         TokenInput.TokenInputBuilder tokenInputBuilder = TokenInput.builder();
        try {
@@ -162,5 +225,42 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
 
         logger.info("mdl token {}", mdlToken);
         return mdlToken;
+    }
+
+    private boolean isOver(String birthDate, int ageInYears) {
+        try {
+            int age = ageInYears(birthDate);
+            return age >= ageInYears;
+        }
+        catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    private int ageInYears(String birthDate) {
+        try {
+            Instant now = Instant.now();
+            Instant birthDateInstant = new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM-dd[-HHmmss]")
+                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+                    .parseDefaulting(ChronoField.NANO_OF_SECOND, 0)
+                    .toFormatter()
+                    .withZone(ZoneId.of("UTC"))
+                    .parse(birthDate, Instant::from);
+
+            return (int) ChronoUnit.YEARS.between(
+                    birthDateInstant.atZone(ZoneId.systemDefault()),
+                    now.atZone(ZoneId.systemDefault()));
+        }
+        catch (NullPointerException e) {
+            logger.error("Could not calculate age in years from null value", e);
+            throw e;
+        }
+        catch (RuntimeException e) {
+            logger.error("Could not calculate age in years", e);
+            throw e;
+        }
     }
 }

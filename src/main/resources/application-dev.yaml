@@ -3,7 +3,7 @@ server:
   ssl:
     enabled: true
     key-store-type: JKS
-    key-store: "file:../eudiw-prototype/sc-environment/config/common/tls.jks"
+    key-store: "file:../old-eudiw-prototype/sc-environment/config/common/tls.jks"
     key-store-password: secret
     key-alias: tls
 
@@ -37,10 +37,8 @@ spring:
             certificate: "file:../eudiw-prototype/sc-environment/config/common/tls.crt"
 
 eudiw:
-  issuer: https://wallet.sandbox.digg.se
-    #https://local.dev.swedenconnect.se:9090
-  issuerBaseUrl: https://wallet.sandbox.digg.se
-  #https://local.dev.swedenconnect.se:9090
+  issuer: https://local.dev.swedenconnect.se:9090
+  issuerBaseUrl: https://local.dev.swedenconnect.se:9090
   authHost: https://local.dev.swedenconnect.se:9090
   credentialHost: https://local.dev.swedenconnect.se:9090
   expHours: 24
@@ -69,8 +67,10 @@ eudiw:
     - "https://local.dev.swedenconnect.se:9443/callback-test-1-authorisation-flow"
     - "https://local.dev.swedenconnect.se:9443/callback-test-2-pre-authorisation-flow"
     - "https://local.dev.swedenconnect.se:9443/callback-test-3-par"
+    - "https://local.dev.swedenconnect.se:9443/callback-test-4-authorisation-flow-authorization-details"
     - "https://local.dev.swedenconnect.se:9443"
     - "eu.europa.ec.euidi://authorization"
+    - "http://localhost:8080"
   swedenconnect:
     base-url: https://local.dev.swedenconnect.se:9060/id-backend/auth
     client: wallet-dev

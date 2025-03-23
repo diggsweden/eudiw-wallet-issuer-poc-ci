@@ -43,6 +43,7 @@ eudiw:
   credentialHost: https://local.dev.swedenconnect.se:9090
   expHours: 24
   clientId: 1234567891
+  credentialOfferTtlInSeconds: 600
   #eudiw-client
 
   openidFederation:

@@ -15,6 +15,9 @@ public class PreAuthorizationCodeGrant implements Grant {
     String authorizationServer;
     TxCodeType txCode;
 
+    public PreAuthorizationCodeGrant() {
+    }
+
     public PreAuthorizationCodeGrant(String preAuthorizedCode, String authorizationServer, TxCodeType txCode) {
         this.preAuthorizedCode = preAuthorizedCode;
         this.authorizationServer = authorizationServer;

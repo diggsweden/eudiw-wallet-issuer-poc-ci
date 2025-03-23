@@ -2,7 +2,6 @@ package se.digg.eudiw.authorization;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -36,9 +35,7 @@ public class PreAuthCodeGrantAuthenticationProvider implements AuthenticationPro
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        if (!(authentication instanceof PreAuthCodeGrantAuthenticationToken)) return null;
-        PreAuthCodeGrantAuthenticationToken preAuthCodeGrantAuthenticationToken =
-                (PreAuthCodeGrantAuthenticationToken) authentication;
+        if (!(authentication instanceof PreAuthCodeGrantAuthenticationToken preAuthCodeGrantAuthenticationToken)) return null;
 
         // Ensure the client is authenticated
         OAuth2ClientAuthenticationToken clientPrincipal =
@@ -54,6 +51,7 @@ public class PreAuthCodeGrantAuthenticationProvider implements AuthenticationPro
         OAuth2TokenContext tokenContext = DefaultOAuth2TokenContext.builder()
                 .registeredClient(registeredClient)
                 .principal(clientPrincipal)
+                .principal(authentication)
                 .authorizationServerContext(AuthorizationServerContextHolder.getContext())
                 .tokenType(OAuth2TokenType.ACCESS_TOKEN)
                 .authorizationGrantType(preAuthCodeGrantAuthenticationToken.getGrantType())

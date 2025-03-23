@@ -18,7 +18,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <relativePath></relativePath>
     </parent>
 
@@ -100,7 +100,25 @@
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
 
-    <!-- Documentation -->
+      <dependency>
+          <groupId>se.oidc.oidfed</groupId>
+          <artifactId>openid-federation-base</artifactId>
+          <version>3.0.1</version>
+      </dependency>
+
+      <dependency>
+          <groupId>se.oidc.oidfed.md</groupId>
+          <artifactId>wallet-entities</artifactId>
+          <version>1.2.0</version>
+      </dependency>
+
+      <dependency>
+          <groupId>se.oidc.oidfed.md</groupId>
+          <artifactId>metadata-base</artifactId>
+          <version>1.2.0</version>
+      </dependency>
+
+      <!-- Documentation -->
     <dependency>
       <groupId>se.digg.wallet</groupId>
       <artifactId>eudiw-wallet-token-lib</artifactId>
@@ -294,29 +312,6 @@
 
   <build>
       <plugins>
-
-          <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>build-helper-maven-plugin</artifactId>
-              <version>3.6.0</version>
-              <executions>
-                  <execution>
-                      <id>add-source</id>
-                      <phase>generate-sources</phase>
-                      <goals>
-                          <goal>add-source</goal>
-                          <goal>add-test-source</goal>
-                      </goals>
-                      <configuration>
-                          <sources>
-                              <source>openid-federation-metadata/metadata-base/src/main/java</source>
-                              <source>openid-federation-base/src/main/java</source>
-                              <source>openid-federation-metadata/wallet-entities/src/main/java</source>
-                          </sources>
-                      </configuration>
-                  </execution>
-              </executions>
-          </plugin>
 
           <!-- Core plugins -->
           <plugin>

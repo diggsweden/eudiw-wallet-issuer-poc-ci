@@ -12,6 +12,10 @@ public class AuthorizationCodeGrant implements Grant {
     String issuerState;
     String authorizationServer;
 
+
+    public AuthorizationCodeGrant() {
+    }
+
     public AuthorizationCodeGrant(String issuerState, String authorizationServer) {
         this.issuerState = issuerState;
         this.authorizationServer = authorizationServer;

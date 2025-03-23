@@ -53,6 +53,7 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
 
     private String sdJwtVcCredential(String credentialType, JWK deviceProofPublicKey, Jwt jwt) throws TokenIssuingException {
 
+
         List<TokenAttribute> tokenAttributes = new ArrayList<>(Arrays.asList(
                 TokenAttribute.builder().type(new TokenAttributeType("given_name")).value(jwt.getClaim("givenName")).build(),
                 TokenAttribute.builder().type(new TokenAttributeType("last_name")).value(jwt.getClaim("surname")).build(),
@@ -67,6 +68,11 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
             tokenAttributes.add(
                     TokenAttribute.builder().type(
                             new TokenAttributeType("birth_date"))
+                            .value(birthDate).build()
+            );
+            tokenAttributes.add(
+                    TokenAttribute.builder().type(
+                                    new TokenAttributeType("birthdate"))
                             .value(birthDate).build()
             );
 
@@ -117,12 +123,6 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
                 TokenAttribute.builder()
                         .type(new TokenAttributeType(
                                 TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
-                                "issuing_country"))
-                        .value("SE")
-                        .build(),
-                TokenAttribute.builder()
-                        .type(new TokenAttributeType(
-                                TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
                                 "given_name")).value(jwt.getClaim("givenName")).build(),
                 TokenAttribute.builder()
                         .type(new TokenAttributeType(
@@ -135,14 +135,20 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
                 TokenAttribute.builder()
                         .type(new TokenAttributeType(
                                 TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
-                                "expiry_date"))
-                        .value(LocalDate.ofInstant(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours())), ZoneId.systemDefault()))
+                                "issuing_country"))
+                        .value("SE")
                         .build(),
                 TokenAttribute.builder()
                         .type(new TokenAttributeType(
                                 TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
                                 "issuing_authority"))
                         .value("Test PID issuer")
+                        .build(),
+                TokenAttribute.builder()
+                        .type(new TokenAttributeType(
+                                TokenAttributeNameSpace.EUDI_WALLET_PID.getId(),
+                                "expiry_date"))
+                        .value(LocalDate.ofInstant(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours())), ZoneId.systemDefault()))
                         .build()
         ));
 

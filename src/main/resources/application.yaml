@@ -30,6 +30,9 @@ eudiw:
   credentialHost: https://local.dev.swedenconnect.se:9090
   expHours: 24
   clientId: eudiw-client
+  credentialOfferTtlInSeconds: 600
+  signedMetaData: true
+
   redirectUris:
     - "https://local.dev.swedenconnect.se:9091/callback-test-1-authorisation-flow"
     - "https://local.dev.swedenconnect.se:9091"

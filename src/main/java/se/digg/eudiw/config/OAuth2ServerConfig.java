@@ -47,9 +47,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
-import se.digg.eudiw.service.OidcUserInfoService;
-import se.digg.eudiw.service.OpenIdFederationService;
-import se.digg.eudiw.service.ParCacheService;
+import se.digg.eudiw.service.*;
 
 @Configuration
 @EnableWebSecurity
@@ -87,7 +85,7 @@ public class OAuth2ServerConfig {
 
   @Bean
   @Order(2)
-  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, @Autowired RegisteredClientRepository registeredClientRepository, @Autowired AuthenticationManager authenticationManager, @Autowired OAuth2AuthorizationService authorizationService, @Autowired OAuth2TokenGenerator<?> tokenGenerator, @Autowired ParCacheService parCacheService) throws Exception {
+  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, @Autowired RegisteredClientRepository registeredClientRepository, @Autowired AuthenticationManager authenticationManager, @Autowired OAuth2AuthorizationService authorizationService, @Autowired OAuth2TokenGenerator<?> tokenGenerator, @Autowired ParCacheService parCacheService, @Autowired CredentialOfferService credentialOfferService, DummyProofService dummyProofService) throws Exception {
     OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
             OAuth2AuthorizationServerConfigurer.authorizationServer();
 
@@ -122,7 +120,7 @@ public class OAuth2ServerConfig {
                             )
                             .tokenEndpoint(tokenEndpoint -> tokenEndpoint
 
-                                    .accessTokenRequestConverter(new PreAuthCodeGrantAuthenticationConverter(contextRepository))
+                                    .accessTokenRequestConverter(new PreAuthCodeGrantAuthenticationConverter(contextRepository, credentialOfferService, dummyProofService))
                                     .authenticationProvider(new PreAuthCodeGrantAuthenticationProvider(authorizationService, tokenGenerator, registeredClientRepository)))
 
             )
@@ -180,10 +178,10 @@ public class OAuth2ServerConfig {
                                     .requestMatchers("/demo-credential").permitAll()
                                     .requestMatchers("/pid").permitAll()
                                     .requestMatchers("/pid-credential-offer").permitAll()
+                                    .requestMatchers("/credential_offer/**").permitAll()
                                     .requestMatchers("/pid/preauth").permitAll()
                                     .requestMatchers("/demo-oidfed-client").authenticated()
                                     .requestMatchers("/credential").authenticated() //hasAuthority("SCOPE_VerifiablePortableDocumentA1")
-                                    .requestMatchers("/credential_offer").hasAuthority("SCOPE_VerifiablePortableDocumentA1")
                                     .anyRequest().authenticated()
             )
             .csrf(AbstractHttpConfigurer::disable)

@@ -25,11 +25,11 @@ public class ProofDecoder {
             JWTClaimsSet jwtClaimsSet = signedJWT.getJWTClaimsSet();
             JWSHeader header = signedJWT.getHeader();
             JWK jwk = header.getJWK();
-
+            String kid = header.getKeyID();
 
             if (jwk != null)  return  Optional.of(jwk);
 
-
+            if (jwk == null && kid != null)  return  Optional.empty();
         } catch (ParseException e) {
             return  Optional.empty();
         }

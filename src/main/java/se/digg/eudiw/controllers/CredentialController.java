@@ -5,8 +5,10 @@ import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.Nonce;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
@@ -20,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,8 +32,10 @@ import se.digg.eudiw.component.ProofDecoder;
 import se.digg.eudiw.model.credentialissuer.CredentialOfferParam;
 import se.digg.eudiw.model.credentialissuer.CredentialParam;
 import se.digg.eudiw.model.credentialissuer.CredentialResponse;
+import se.digg.eudiw.model.credentialissuer.JwtProof;
 import se.digg.eudiw.service.CredentialIssuerService;
 import se.digg.eudiw.service.CredentialOfferService;
+import se.digg.eudiw.service.DummyProofService;
 import se.digg.eudiw.service.OpenIdFederationService;
 import se.digg.wallet.datatypes.common.TokenIssuingException;
 import se.oidc.oidfed.md.wallet.credentialissuer.WalletOAuthClientMetadata;
@@ -44,14 +49,16 @@ public class CredentialController {
     private final ProofDecoder proofDecoder;
     private final CredentialIssuerService credentialIssuerService;
     private final CredentialOfferService credentialOfferService;
+    private final DummyProofService dummyProofService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    public CredentialController(@Autowired OpenIdFederationService openIdFederationService, @Autowired ProofDecoder proofDecoder, @Autowired CredentialIssuerService credentialIssuerService, @Autowired CredentialOfferService credentialOfferService) {
+    public CredentialController(@Autowired OpenIdFederationService openIdFederationService, @Autowired ProofDecoder proofDecoder, @Autowired CredentialIssuerService credentialIssuerService, @Autowired CredentialOfferService credentialOfferService, DummyProofService dummyProofService) {
         this.openIdFederationService = openIdFederationService;
         this.proofDecoder = proofDecoder;
         this.credentialIssuerService = credentialIssuerService;
         this.credentialOfferService = credentialOfferService;
+        this.dummyProofService = dummyProofService;
     }
 
     @GetMapping("/demo-oidfed-client")
@@ -70,7 +77,39 @@ public class CredentialController {
             if (authentication.getPrincipal() instanceof Jwt) {
 
                 // wallet proof in request from wallet
-                Optional<JWK> proofJwk = proofDecoder.decodeJwtProf(credential.getProof());
+                Optional<JWK> proofJwk = Optional.empty();
+
+                JwtProof jwtProof = credential.getProof();
+
+                if (jwtProof != null && "jwt".equals(jwtProof.getProofType()) && jwtProof.getJwt() != null) {
+
+                    try {
+                        logger.info("proof jwt: {}", jwtProof.getJwt());
+                        SignedJWT signedJWT = SignedJWT.parse(jwtProof.getJwt());
+                        JWTClaimsSet jwtClaimsSet = signedJWT.getJWTClaimsSet();
+                        JWSHeader header = signedJWT.getHeader();
+                        JWK jwk = header.getJWK();
+                        if (jwk != null)  {
+                            proofJwk = Optional.of(jwk);
+                        }
+                        else {
+                            String kid = header.getKeyID();
+                            if (StringUtils.hasText(kid)) {
+                                if (kid.indexOf("#") > 0) {
+                                    kid = kid.split("#")[0];
+                                    proofJwk = dummyProofService.jwk(kid);
+                                }
+                            }
+                        }
+                        logger.info("jwk: {}", jwk);
+
+
+
+                    } catch (ParseException e) {
+                        logger.info("No proof is parsed in credential request");
+                    }
+
+                }
 
                 // get registered wallet proof public key from federation
 //                String clientId = jwt.getClaim("clientId");

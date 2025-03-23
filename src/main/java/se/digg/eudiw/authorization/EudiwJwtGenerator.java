@@ -70,8 +70,17 @@ public final class EudiwJwtGenerator implements OAuth2TokenGenerator<Jwt> {
                     claimsBuilder.issuer(issuer);
                 }
 
+                // after id proxy login is the
                 if (context.getPrincipal().getPrincipal() instanceof SwedenConnectPrincipal) {
                     SwedenConnectPrincipal swedenConnectPrincipal = (SwedenConnectPrincipal)context.getPrincipal().getPrincipal();
+                    claimsBuilder.claim("personalNumber", swedenConnectPrincipal.getSubjAttributes().getPersonalNumber());
+                    claimsBuilder.claim("surname", swedenConnectPrincipal.getSubjAttributes().getSurname());
+                    claimsBuilder.claim("givenName", swedenConnectPrincipal.getSubjAttributes().getGivenName());
+                    claimsBuilder.claim("birthDate", swedenConnectPrincipal.getSubjAttributes().getBirthDate());
+                }
+
+                if (context.getPrincipal() instanceof PreAuthCodeGrantAuthenticationToken) {
+                    SwedenConnectPrincipal swedenConnectPrincipal = ((PreAuthCodeGrantAuthenticationToken)context.getPrincipal()).getSwedenConnectPrincipal();
                     claimsBuilder.claim("personalNumber", swedenConnectPrincipal.getSubjAttributes().getPersonalNumber());
                     claimsBuilder.claim("surname", swedenConnectPrincipal.getSubjAttributes().getSurname());
                     claimsBuilder.claim("givenName", swedenConnectPrincipal.getSubjAttributes().getGivenName());

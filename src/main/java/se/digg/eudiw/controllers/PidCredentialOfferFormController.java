@@ -89,7 +89,7 @@ credential_offer?credential_offer=
             IssuerStateBuilder issuerStateBuilder = new IssuerStateBuilder(eudiwConfig.getIssuer(), issuerCredential);
             issuerStateBuilder.withCredentialOfferId(UUID.randomUUID().toString());
 
-            credentialOfferParam.setGrants(Map.of(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeGrant(issuerStateBuilder.build(), null)));
+            credentialOfferParam.setGrants(Map.of(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeGrant(issuerStateBuilder.build(), eudiwConfig.getAuthHost())));
 
             String jsonData = null;
             try {

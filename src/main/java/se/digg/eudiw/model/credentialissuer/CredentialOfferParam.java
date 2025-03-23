@@ -1,7 +1,6 @@
 package se.digg.eudiw.model.credentialissuer;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +16,9 @@ public class CredentialOfferParam {
     String credentialIssuer;
     List<String> credentialConfigurationIds;
     Map<GrantType, Grant> grants;
+
+    public CredentialOfferParam() {
+    }
 
     public CredentialOfferParam(String credentialIssuer, List<String> credentialConfigurationIds) {
         this.credentialIssuer = credentialIssuer;

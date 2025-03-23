@@ -39,6 +39,8 @@ public class EudiwConfig {
 
     private int credentialOfferTtlInSeconds;
 
+    private boolean signedMetaData;
+
     private OpenIdFederationConfiguration openidFederation;
 
     private SwedenConnectConfiguration swedenconnect;
@@ -112,6 +114,14 @@ public class EudiwConfig {
 
     public void setCredentialOfferTtlInSeconds(int credentialOfferTtlInSeconds) {
         this.credentialOfferTtlInSeconds = credentialOfferTtlInSeconds;
+    }
+
+    public boolean isSignedMetaData() {
+        return signedMetaData;
+    }
+
+    public void setSignedMetaData(boolean signedMetaData) {
+        this.signedMetaData = signedMetaData;
     }
 
     public void setRedirectUris(List<String> redirectUris) {

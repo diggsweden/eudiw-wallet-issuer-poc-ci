@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import se.digg.eudiw.authentication.SwedenConnectPrincipal;
 
 import java.util.Collection;
 import java.util.Map;
@@ -15,6 +16,7 @@ public class PreAuthCodeGrantAuthenticationToken extends AbstractAuthenticationT
     private final String clientId;
     private final Authentication authentication;
     private final Map<String, Object> additionalParameters;
+    private SwedenConnectPrincipal swedenConnectPrincipal;
     private final AuthorizationGrantType authorizationGrantType;
 
     public PreAuthCodeGrantAuthenticationToken(Collection<? extends GrantedAuthority> authorities) {
@@ -26,12 +28,13 @@ public class PreAuthCodeGrantAuthenticationToken extends AbstractAuthenticationT
         clientId = null;
     }
 
-    public PreAuthCodeGrantAuthenticationToken(String preAuthorizedCode, String clientId, Authentication authentication, Map<String, Object> additionalParameters) {
+    public PreAuthCodeGrantAuthenticationToken(String preAuthorizedCode, String clientId, Authentication authentication, Map<String, Object> additionalParameters, SwedenConnectPrincipal swedenConnectPrincipal) {
         super(authentication.getAuthorities());
         this.preAuthorizedCode = preAuthorizedCode;
         this.clientId = clientId;
         this.authentication = authentication;
         this.additionalParameters = additionalParameters;
+        this.swedenConnectPrincipal = swedenConnectPrincipal;
         this.authorizationGrantType = new AuthorizationGrantType(PreAuthParameterNames.PRE_AUTHORIZED_CODE_GRANT);
     }
 
@@ -63,6 +66,10 @@ public class PreAuthCodeGrantAuthenticationToken extends AbstractAuthenticationT
 
     public String getClientId() {
         return clientId;
+    }
+
+    public SwedenConnectPrincipal getSwedenConnectPrincipal() {
+        return swedenConnectPrincipal;
     }
 
     public AuthorizationGrantType getAuthorizationGrantType() {

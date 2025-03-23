@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.stereotype.Service;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.model.credentialissuer.CredentialOfferParam;
+import se.digg.eudiw.model.credentialissuer.PendingPreAuthorization;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,11 +13,13 @@ import java.util.concurrent.TimeUnit;
 public class CredentialOfferServiceImpl implements CredentialOfferService {
 
     private final RedisOperations<String, CredentialOfferParam> operations;
+    private final RedisOperations<String, PendingPreAuthorization> pendingPreAuthorizationRedisOperations;
     private final EudiwConfig eudiwConfig;
 
-    public CredentialOfferServiceImpl(@Autowired RedisOperations<String, CredentialOfferParam> operations, @Autowired EudiwConfig eudiwConfig) {
+    public CredentialOfferServiceImpl(@Autowired RedisOperations<String, CredentialOfferParam> operations, @Autowired RedisOperations<String, PendingPreAuthorization> pendingPreAuthorizationRedisOperations, @Autowired EudiwConfig eudiwConfig) {
         this.operations = operations;
         this.eudiwConfig = eudiwConfig;
+        this.pendingPreAuthorizationRedisOperations = pendingPreAuthorizationRedisOperations;
     }
 
     @Override
@@ -27,5 +30,15 @@ public class CredentialOfferServiceImpl implements CredentialOfferService {
     @Override
     public void store(String credentialOfferId, CredentialOfferParam credentialOffer) {
         operations.opsForValue().set(credentialOfferId, credentialOffer, eudiwConfig.getCredentialOfferTtlInSeconds(), TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void store(String preAuthCode, PendingPreAuthorization pendingPreAuthorization) {
+        pendingPreAuthorizationRedisOperations.opsForValue().set(preAuthCode, pendingPreAuthorization, eudiwConfig.getCredentialOfferTtlInSeconds(), TimeUnit.SECONDS);
+    }
+
+    @Override
+    public PendingPreAuthorization pendingPreAuthorization(String preAuthCode) {
+        return pendingPreAuthorizationRedisOperations.opsForValue().getAndDelete(preAuthCode);
     }
 }

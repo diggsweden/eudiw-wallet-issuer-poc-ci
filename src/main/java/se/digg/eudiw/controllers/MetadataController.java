@@ -2,6 +2,7 @@ package se.digg.eudiw.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWKSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -21,12 +23,12 @@ import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.config.SignerConfig;
 import se.digg.eudiw.service.OpenIdFederationService;
 import se.digg.wallet.datatypes.mdl.process.MdlTokenIssuer;
-import se.oidc.oidfed.base.data.LanguageObject;
 import se.oidc.oidfed.base.data.federation.EntityMetadataInfoClaim;
 import se.oidc.oidfed.base.data.federation.EntityStatement;
 import se.oidc.oidfed.base.data.federation.EntityStatementDefinedParams;
 import se.oidc.oidfed.base.data.federation.TrustMarkClaim;
-import se.oidc.oidfed.base.data.metadata.FederationEntityMetadata;
+import se.oidc.oidfed.md.entities.FederationEntityMetadata;
+import se.oidc.oidfed.md.lang.LanguageObject;
 import se.oidc.oidfed.md.wallet.credentialissuer.*;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
@@ -34,7 +36,6 @@ import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
 @RestController
 public class MetadataController {
-
 
     private final OpenIdFederationService openIdFederationService;
     private final SignerConfig signer;
@@ -57,15 +58,14 @@ public class MetadataController {
     }
 
     @GetMapping("/.well-known/openid-credential-issuer")
-    CredentialIssuerMetadata metadata() {
-        return CredentialIssuerMetadata.builder()
+    CredentialIssuerMetadata metadata() throws CertificateEncodingException, JOSEException, JsonProcessingException {
+        CredentialIssuerMetadata.CredentialIssuerMetadataBuilder metadataBuilder = CredentialIssuerMetadata.builder()
                 .credentialIssuer(eudiwConfig.getIssuer())
                 .authorizationServers(List.of(eudiwConfig.getAuthHost()))
                 .credentialEndpoint(String.format("%s/credential", eudiwConfig.getCredentialHost()))
                 .deferredCredentialEndpoint(String.format("%s/credential_deferred", eudiwConfig.getCredentialHost()))
                 .notificationEndpoint(String.format("%s/notification", eudiwConfig.getCredentialHost()))
                 //.batchCredentialIssuance(new BatchCredentialIssuance(100))
-                .signedMetadata("signed_metadata_jwt")
                 .display(List.of(
                         Display.builder()
                                 .name("DIGG PID issuer")
@@ -117,41 +117,22 @@ public class MetadataController {
                                                 .build()
                                 ))
                                 .build())
-                        .claim("eu.europa.ec.eudi.pid.1", "age_over_18", Claim.builder() // TODO kolla om det finns value type för boolean
-                                .mandatory(true)
-                                .display(List.of(
-                                        Display.builder()
-                                                .name("Adult or minor")
-                                                .locale("en")
-                                                .build()
-                                ))
-                                .build())
-                        .claim("eu.europa.ec.eudi.pid.1", "birth_date", Claim.builder()
-                                .mandatory(true)
-                                .valueType("full-date") // TODO kolla hur det ska formateras
-                                .display(List.of(
-                                        Display.builder()
-                                                .name("Date of Birth")
-                                                .locale("en")
-                                                .build()
-                                ))
-                                .build())
-                        .claim("eu.europa.ec.eudi.pid.1", "expiry_date", Claim.builder()
-                                .mandatory(true)
-                                .valueType("full-date")
-                                .display(List.of(
-                                        Display.builder()
-                                                .name("Expiry date")
-                                                .locale("en")
-                                                .build()
-                                ))
-                                .build())
                         .claim("eu.europa.ec.eudi.pid.1", "issuance_date", Claim.builder()
                                 .mandatory(true)
                                 .valueType("full-date")
                                 .display(List.of(
                                         Display.builder()
                                                 .name("Date (and possibly time) when the PID was issued")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "issuing_country", Claim.builder()
+                                .mandatory(true)
+                                .valueType("text")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Alpha-2 country code, as defined in ISO 3166-1, of the PID Provider's country or territory")
                                                 .locale("en")
                                                 .build()
                                 ))
@@ -166,12 +147,76 @@ public class MetadataController {
                                                 .build()
                                 ))
                                 .build())
-                        .claim("eu.europa.ec.eudi.pid.1", "issuing_country", Claim.builder()
+                        .claim("eu.europa.ec.eudi.pid.1", "expiry_date", Claim.builder()
                                 .mandatory(true)
-                                .valueType("text")
+                                .valueType("full-date")
                                 .display(List.of(
                                         Display.builder()
-                                                .name("Alpha-2 country code, as defined in ISO 3166-1, of the PID Provider's country or territory")
+                                                .name("Expiry date")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "birth_date", Claim.builder()
+                                .mandatory(true)
+                                .valueType("full-date") // TODO kolla hur det ska formateras
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Date of Birth")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "age_over_15", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 15")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "age_over_15", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 16")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "age_over_18", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(true)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 18")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "age_over_20", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 20")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "age_over_65", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 65")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("eu.europa.ec.eudi.pid.1", "age_in_years", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(true)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age in years")
                                                 .locale("en")
                                                 .build()
                                 ))
@@ -255,32 +300,22 @@ public class MetadataController {
                                                 .build()
                                 ))
                                 .build())
-                        .claim("age_over_18", Claim.builder() // TODO kolla om det finns value type för boolean
+                        // family_name is not specified in ARF, however it is the IANA name and should be present in sd jwt vc https://www.iana.org/assignments/jwt/jwt.xhtml#claims
+                        .claim("family_name", Claim.builder()
                                 .mandatory(true)
+                                .valueType("text")
                                 .display(List.of(
                                         Display.builder()
-                                                .name("Adult or minor")
+                                                .name("Surname")
                                                 .locale("en")
-                                                .build()
-                                ))
-                                .build())
-                        .claim("birth_date", Claim.builder()
-                                .mandatory(true)
-                                .valueType("full-date") // TODO kolla hur det ska formateras
-                                .display(List.of(
+                                                .build(),
                                         Display.builder()
-                                                .name("Date of Birth")
-                                                .locale("en")
-                                                .build()
-                                ))
-                                .build())
-                        .claim("expiry_date", Claim.builder()
-                                .mandatory(true)
-                                .valueType("full-date")
-                                .display(List.of(
+                                                .name("Efternamn")
+                                                .locale("sv")
+                                                .build(),
                                         Display.builder()
-                                                .name("Expiry date")
-                                                .locale("en")
+                                                .name("Nachname")
+                                                .locale("de")
                                                 .build()
                                 ))
                                 .build())
@@ -290,16 +325,6 @@ public class MetadataController {
                                 .display(List.of(
                                         Display.builder()
                                                 .name("Date (and possibly time) when the PID was issued")
-                                                .locale("en")
-                                                .build()
-                                ))
-                                .build())
-                        .claim("issuing_authority", Claim.builder()
-                                .mandatory(true)
-                                .valueType("text")
-                                .display(List.of(
-                                        Display.builder()
-                                                .name("Name of the administrative authority that has issued this PID instance, or the ISO 3166 Alpha-2 country code of the respective Member State if there is no separate authority authorized to issue PIDs")
                                                 .locale("en")
                                                 .build()
                                 ))
@@ -314,10 +339,109 @@ public class MetadataController {
                                                 .build()
                                 ))
                                 .build())
+                        .claim("issuing_authority", Claim.builder()
+                                .mandatory(true)
+                                .valueType("text")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Name of the administrative authority that has issued this PID instance, or the ISO 3166 Alpha-2 country code of the respective Member State if there is no separate authority authorized to issue PIDs")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("expiry_date", Claim.builder()
+                                .mandatory(true)
+                                .valueType("full-date")
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Expiry date")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("birth_date", Claim.builder()
+                                .mandatory(true)
+                                .valueType("full-date") // TODO kolla hur det ska formateras
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Date of Birth")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        // birthdate is not specified in ARF, however it is the IANA name and should be present in sd jwt vc https://www.iana.org/assignments/jwt/jwt.xhtml#claims
+                        .claim("birthdate", Claim.builder()
+                                .mandatory(true)
+                                .valueType("full-date") // TODO kolla hur det ska formateras
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Date of Birth")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("age_over_15", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 15")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("age_over_16", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 16")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("age_over_18", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(true)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 18")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("age_over_20", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 20")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("age_over_65", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(false)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age over 65")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+                        .claim("age_in_years", Claim.builder() // TODO kolla om det finns value type för boolean
+                                .mandatory(true)
+                                .display(List.of(
+                                        Display.builder()
+                                                .name("Age in years")
+                                                .locale("en")
+                                                .build()
+                                ))
+                                .build())
+
                         //.order(List.of("given_name","last_name"))
                         .build()
-                )
-                .build();
+                );
+            if (eudiwConfig.isSignedMetaData()) {
+                return metadataBuilder.buildWithSignedMetadata(signer.getJwtSigningCredential().getSigner(), JWSAlgorithm.ES256, signer.getJwtSigningCredential().getKid());
+            }
+            return metadataBuilder.build();
     }
 
     @RequestMapping(value = "/.well-known/openid-federation", produces = "application/TODO_ENTITY_STATEMENT_TYPE")
@@ -363,7 +487,7 @@ public class MetadataController {
                     .build(signer.getJwtSigningCredential(), null).getSignedJWT().serialize();
 
             return ResponseEntity.ok().body(jwt);
-        } catch (JsonProcessingException | NoSuchAlgorithmException | JOSEException e) {
+        } catch (JsonProcessingException | NoSuchAlgorithmException | JOSEException | CertificateEncodingException e) {
             logger.error("Could not create entity statement", e);
             return ResponseEntity.internalServerError().body("Could not create entity statement");
         }

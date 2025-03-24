@@ -60,7 +60,7 @@ public class ValKeyConfig {
         // TODO remove with DummyProofService work-around
         RedisTemplate<String, JWK> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(JWK.class));
+        //template.setValueSerializer(new Jackson2JsonRedisSerializer<>(mapper, JWK.class));
         return template;
     }
 

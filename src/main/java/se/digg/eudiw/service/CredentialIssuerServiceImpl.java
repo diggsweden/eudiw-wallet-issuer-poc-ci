@@ -64,7 +64,7 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
                 TokenAttribute.builder().type(new TokenAttributeType("expiry_date")).value(Instant.now().plus(Duration.ofHours(eudiwConfig.getExpHours()))).build() // TODO
         ));
         String birthDate = jwt.getClaim("birthDate");
-        if (!StringUtils.hasText(birthDate) && birthDate != null) {
+        if (StringUtils.hasText(birthDate)) {
             tokenAttributes.add(
                     TokenAttribute.builder().type(
                             new TokenAttributeType("birth_date"))
@@ -153,7 +153,7 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
         ));
 
         String birthDate = jwt.getClaim("birthDate");
-        if (!StringUtils.hasText(birthDate) && birthDate != null) {
+        if (StringUtils.hasText(birthDate)) {
             tokenAttributes.add(
                     TokenAttribute.builder()
                             .type(new TokenAttributeType(

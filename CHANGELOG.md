@@ -5,17 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.17] - 2025-04-24
+
+### Added
+
+- Add refactored credential offer
+- Add content to information page
+- Add digg logo and branding in issuer metadata
+- Add code in project as temp work-around mvn deps
+- Add pre-auth credential offer support
 
 ### Changed
 
+- Clean up oidc sweden dependencies
+- Html fixes and a fix in the proof work around
+- Update github actions
+- Update cgr.dev/chainguard/jre:latest docker digest to 47f8c0e
 - Update maven-plugins
 
 ### Fixed
 
+- Fix birth date bug in credential
 - Update nimbusds
 - Update java non-major
 - Update spring non-major to v6.2.5 (#98)
+
 
 ## [0.0.15] - 2025-03-19
 
@@ -228,7 +242,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update zxing to v3.5.3
 - Update spring non-major
 
-[unreleased]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.15..HEAD
+[0.0.17]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.15..v0.0.17
 [0.0.15]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/0.0.15-diggdev..v0.0.15
 [0.0.15-diggdev]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.14..0.0.15-diggdev
 [0.0.14]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.13..v0.0.14

@@ -77,7 +77,7 @@ public class CredentialController {
             if (authentication.getPrincipal() instanceof Jwt) {
 
                 // wallet proof in request from wallet
-                Optional<JWK> proofJwk = Optional.empty();
+                Optional<JWK> proofJwk = proofDecoder.decodeJwtProf(credential.getProof());
 
                 JwtProof jwtProof = credential.getProof();
 
@@ -169,7 +169,7 @@ public class CredentialController {
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, TokenIssuingException.class})
-    public ResponseEntity<String> handleIllegalArgumentException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<String> handleIllegalArgumentException(Exception ex) {
         logger.info("Cannot issue credential", ex);
         String wwwAuthenticate = "";
         Nonce dPoPNonce = new Nonce();

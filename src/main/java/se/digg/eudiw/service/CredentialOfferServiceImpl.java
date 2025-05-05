@@ -39,6 +39,7 @@ public class CredentialOfferServiceImpl implements CredentialOfferService {
 
     @Override
     public PendingPreAuthorization pendingPreAuthorization(String preAuthCode) {
-        return pendingPreAuthorizationRedisOperations.opsForValue().getAndDelete(preAuthCode);
+        // TODO: change back to getAndDelete - temporary fix for android reference implementation wallet app
+        return pendingPreAuthorizationRedisOperations.opsForValue().get(preAuthCode);
     }
 }

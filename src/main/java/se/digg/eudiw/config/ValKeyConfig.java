@@ -18,6 +18,8 @@ import se.digg.eudiw.util.deserializers.GrantCustomDeserializer;
 import se.digg.eudiw.util.deserializers.JwkCustomDeserializer;
 import se.digg.eudiw.util.deserializers.MultiValueMapCustomDeserializer;
 
+import java.util.List;
+
 @Configuration
 public class ValKeyConfig {
 
@@ -46,6 +48,14 @@ public class ValKeyConfig {
         RedisTemplate<String, CredentialOfferParam> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(new Jackson2JsonRedisSerializer<>(mapper, CredentialOfferParam.class));
+        return template;
+    }
+
+    @Bean
+    RedisTemplate<String, List<String>> selectedCredentialsRedisOperations(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, List<String>> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(mapper, List.class));
         return template;
     }
 

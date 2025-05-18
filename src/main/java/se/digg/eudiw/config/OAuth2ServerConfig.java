@@ -4,19 +4,20 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.proc.SecurityContext;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
@@ -25,6 +26,9 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationContext;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationValidator;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2AccessTokenGenerator;
@@ -37,11 +41,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import se.digg.eudiw.authentication.IdProxyRequestBuilder;
 import se.digg.eudiw.authentication.SwedenConnectAuthenticationProvider;
 import se.digg.eudiw.authentication.SwedenconnectAuthenticationReturnFilter;
-import se.digg.eudiw.authorization.OAuth2ParAuthorizationCodeRequestAuthenticationConverter;
-import se.digg.eudiw.authorization.PreAuthCodeGrantAuthenticationConverter;
-import se.digg.eudiw.authorization.OidFederatedRegisteredClientRepository;
-import se.digg.eudiw.authorization.PreAuthCodeGrantAuthenticationProvider;
+import se.digg.eudiw.authorization.CustomRedirectUriValidator;
 import se.digg.eudiw.authorization.EudiwJwtGenerator;
+import se.digg.eudiw.authorization.OAuth2ParAuthorizationCodeRequestAuthenticationConverter;
+import se.digg.eudiw.authorization.OidFederatedRegisteredClientRepository;
+import se.digg.eudiw.authorization.PreAuthCodeGrantAuthenticationConverter;
+import se.digg.eudiw.authorization.PreAuthCodeGrantAuthenticationProvider;
 import se.digg.eudiw.service.ParCacheService;
 import se.digg.eudiw.service.CredentialOfferService;
 import se.digg.eudiw.service.DummyProofService;
@@ -72,9 +77,6 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 @Configuration
 @EnableWebSecurity
 public class OAuth2ServerConfig {
-
-
-  private static final Logger logger = LoggerFactory.getLogger(OAuth2ServerConfig.class);
 
   @Autowired
   private SwedenConnectAuthenticationProvider authProvider;
@@ -132,6 +134,7 @@ public class OAuth2ServerConfig {
                                     authorizationEndpoint
                                             .authorizationRequestConverter(new OAuth2ParAuthorizationCodeRequestAuthenticationConverter(parCacheService))
                                             .authenticationProvider(authProvider)
+                                            .authenticationProviders(configureAuthenticationValidator())
                                             //.authorizationRequestConverters(converters -> converters.addFirst(new ParAuthenticationConverter(parCacheService)))
                                             .errorResponseHandler((req, res, error) -> {
                                               res.getWriter().write("FOOBAR!");
@@ -365,5 +368,21 @@ public class OAuth2ServerConfig {
     return new DefaultAuthenticationEventPublisher(applicationEventPublisher);
   }
 
+
+  private Consumer<List<AuthenticationProvider>> configureAuthenticationValidator() {
+    return (authenticationProviders) ->
+            authenticationProviders.forEach((authenticationProvider) -> {
+              if (authenticationProvider instanceof OAuth2AuthorizationCodeRequestAuthenticationProvider) {
+                Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
+                        // Override default redirect_uri validator
+                        new CustomRedirectUriValidator()
+                                // Reuse default scope validator
+                                .andThen(OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_SCOPE_VALIDATOR);
+
+                ((OAuth2AuthorizationCodeRequestAuthenticationProvider) authenticationProvider)
+                        .setAuthenticationValidator(authenticationValidator);
+              }
+            });
+  }
 
 }

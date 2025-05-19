@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.19] - 2025-05-19
+
+### Changed
+
+- Disable redirect uri verification
+
+### Fixed
+
+- Update dependency io.projectreactor:reactor-core to v3.7.6 (#122)
+- Update nimbusds (#112)
+
 ## [0.0.18] - 2025-05-09
 
 ### Added
@@ -28,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update java non-major (#99)
 - Fix CI
 - Correct eudiw ri credential status code when missing proof
+
 
 ## [0.0.17] - 2025-04-24
 
@@ -266,6 +278,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update zxing to v3.5.3
 - Update spring non-major
 
+[0.0.19]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.18..v0.0.19
 [0.0.18]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.17..v0.0.18
 [0.0.17]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.15..v0.0.17
 [0.0.15]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/0.0.15-diggdev..v0.0.15

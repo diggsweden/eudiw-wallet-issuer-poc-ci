@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationContext;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
@@ -111,6 +112,16 @@ public class OAuth2ServerConfig {
     OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
             OAuth2AuthorizationServerConfigurer.authorizationServer();
 
+    Consumer<OAuth2AuthorizationServerMetadata.Builder>
+        authorizationServerMetadataCustomizer = new Consumer<OAuth2AuthorizationServerMetadata.Builder>() {
+      @Override
+      public void accept(OAuth2AuthorizationServerMetadata.Builder builder) {
+        builder.claim("pushed_authorization_request_endpoint", String.format("%s/oauth2/par", config.getIssuerBaseUrl()));
+        builder.claim("require_pushed_authorization_requests", true);
+      }
+    };
+
+
     http
             .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
             .authorizeHttpRequests( authorizeHttpRequests -> authorizeHttpRequests
@@ -145,6 +156,10 @@ public class OAuth2ServerConfig {
 
                                     .accessTokenRequestConverter(new PreAuthCodeGrantAuthenticationConverter(credentialOfferService, dummyProofService))
                                     .authenticationProvider(new PreAuthCodeGrantAuthenticationProvider(authorizationService, tokenGenerator, registeredClientRepository)))
+                            .authorizationServerMetadataEndpoint(authorizationServerMetadataEndpoint ->
+                                authorizationServerMetadataEndpoint
+                                    .authorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer)
+                            )
 
             )
             .csrf(AbstractHttpConfigurer::disable)

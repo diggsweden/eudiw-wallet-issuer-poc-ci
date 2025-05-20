@@ -109,7 +109,7 @@ public class OidFederatedRegisteredClientRepository implements RegisteredClientR
                         .refreshTokenTimeToLive(Duration.ofSeconds(60 * 60))
                         .reuseRefreshTokens(true)
                         .build())
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build());
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build());
 
 
         RegisteredClient client = registeredClientBuilder.build();

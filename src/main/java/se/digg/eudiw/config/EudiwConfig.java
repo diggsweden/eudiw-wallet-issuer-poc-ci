@@ -11,7 +11,7 @@ import java.util.List;
 @Component 
 public class EudiwConfig {
 
-    public record OpenIdFederationConfiguration(String baseUrl, String trustMarkId, String subject, Integer trustListTtlInSeconds, String walletProviderAnchor, String walletBaseUri, List<String> authorityHints) {
+  public record OpenIdFederationConfiguration(String baseUrl, String trustMarkId, String subject, Integer trustListTtlInSeconds, String walletProviderAnchor, String walletBaseUri, List<String> authorityHints) {
     }
 
     public record SwedenConnectConfiguration(String baseUrl, String client, String returnBaseUrl) {
@@ -20,9 +20,29 @@ public class EudiwConfig {
     public record ValKeyConfig(String host, int port) {
     }
 
+    public record EwcItbConfig(String idp) {
+    }
+
+    public record ServerBaseConfig(String host, int port, String scheme, String contextPath) {
+
+        public String baseUrl() {
+            return String.format("%s://%s%s%s", scheme, host, port == 80 || port == 443 || port == 0 ? "" : ":" + port, contextPath != null ? contextPath : "");
+        }
+
+        public String path(String subPath) {
+            return String.format("%s%s", contextPath != null ? contextPath : "", subPath != null ? subPath : "");
+        }
+    }
+
     private String authHost;
 
     private String callbackUrl;
+
+    private ServerBaseConfig issuerConfig;
+
+    private ServerBaseConfig idProxyFrontend;
+
+    private ServerBaseConfig referenceIdp;
 
     private String issuer;
 
@@ -45,6 +65,8 @@ public class EudiwConfig {
     private SwedenConnectConfiguration swedenconnect;
 
     private ValKeyConfig valkey;
+
+    private EwcItbConfig ewcItb;
 
     public String getAuthHost() {
         return authHost;
@@ -151,19 +173,57 @@ public class EudiwConfig {
         this.valkey = valkey;
     }
 
+    public EwcItbConfig getEwcItb() {
+      return ewcItb;
+    }
+
+    public void setEwcItb(EwcItbConfig ewcItb) {
+      this.ewcItb = ewcItb;
+    }
+
+    public ServerBaseConfig getIssuerConfig() {
+        return issuerConfig;
+    }
+
+    public void setIssuerConfig(ServerBaseConfig issuerConfig) {
+        this.issuerConfig = issuerConfig;
+    }
+
+    public ServerBaseConfig getIdProxyFrontend() {
+        return idProxyFrontend;
+    }
+
+    public void setIdProxyFrontend(ServerBaseConfig idProxyFrontend) {
+        this.idProxyFrontend = idProxyFrontend;
+    }
+
+    public ServerBaseConfig getReferenceIdp() {
+        return referenceIdp;
+    }
+
+    public void setReferenceIdp(ServerBaseConfig referenceIdp) {
+        this.referenceIdp = referenceIdp;
+    }
+
     @Override
     public String toString() {
         return "EudiwConfig{" +
-                "authHost='" + authHost + '\'' +
-                ", callbackUrl='" + callbackUrl + '\'' +
-                ", issuer='" + issuer + '\'' +
-                ", issuerBaseUrl='" + issuerBaseUrl + '\'' +
-                ", credentialHost='" + credentialHost + '\'' +
-                ", expHours=" + expHours +
-                ", clientId='" + clientId + '\'' +
-                ", redirectUris=" + redirectUris +
-                ", credentialOfferTtlInSeconds=" + credentialOfferTtlInSeconds +
-                ", oidFederation='" + openidFederation + '\'' +
-                '}';
+            "authHost='" + authHost + '\'' +
+            ", callbackUrl='" + callbackUrl + '\'' +
+            ", issuerConfig=" + issuerConfig +
+            ", idProxyFrontend=" + idProxyFrontend +
+            ", referenceIdp=" + referenceIdp +
+            ", issuer='" + issuer + '\'' +
+            ", issuerBaseUrl='" + issuerBaseUrl + '\'' +
+            ", credentialHost='" + credentialHost + '\'' +
+            ", expHours=" + expHours +
+            ", clientId='" + clientId + '\'' +
+            ", redirectUris=" + redirectUris +
+            ", credentialOfferTtlInSeconds=" + credentialOfferTtlInSeconds +
+            ", signedMetaData=" + signedMetaData +
+            ", openidFederation=" + openidFederation +
+            ", swedenconnect=" + swedenconnect +
+            ", valkey=" + valkey +
+            '}';
     }
 }

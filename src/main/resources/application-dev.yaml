@@ -3,7 +3,7 @@ server:
   ssl:
     enabled: true
     key-store-type: JKS
-    key-store: "file:../old-eudiw-prototype/sc-environment/config/common/tls.jks"
+    key-store: "${user.home}/.config/devcerts/local.dev.swedenconnect.se.jks"
     key-store-password: secret
     key-alias: tls
 
@@ -52,13 +52,28 @@ spring:
           truststore:
             # certificate path works in local sc-environment if the repos are located side by side
             # otherwise: set the filepath with SPRING_SSL_BUNDLE_PEM_REST_TRUSTSTORE_CERTIFICATE environment variable
-            certificate: "file:../eudiw-prototype/sc-environment/config/common/tls.crt"
+            certificate: "file:${user.home}/.config/devcerts/local.dev.swedenconnect.se-cert.pem"
 
 eudiw:
   issuer: https://local.dev.swedenconnect.se:9090
   issuerBaseUrl: https://local.dev.swedenconnect.se:9090
   authHost: https://local.dev.swedenconnect.se:9090
   credentialHost: https://local.dev.swedenconnect.se:9090
+  issuerConfig:
+    host: local.dev.swedenconnect.se
+    port: 9090
+    scheme: https
+    contextPath: ""
+  reference-idp:
+    host: local.dev.swedenconnect.se
+    port: 9020
+    scheme: https
+    context-path: "/idp"
+  id-proxy-frontend:
+    host: local.dev.swedenconnect.se
+    port: 9065
+    scheme: https
+    context-path: "/id-frontend"
   expHours: 24
   clientId: 1234567891
   credentialOfferTtlInSeconds: 600
@@ -100,7 +115,8 @@ eudiw:
       kid: tokenSigner-1
     - cert-location: file:../eudiw-prototype/sc-environment/config/openid-fed/keystores/wp-certificate.crt
       kid: wp-1
-
+  ewc-itb:
+    idp: "http://local.dev.swedenconnect.se/idp"
 
 credential:
   bundles:

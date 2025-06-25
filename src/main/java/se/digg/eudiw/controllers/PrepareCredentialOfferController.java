@@ -1,20 +1,8 @@
 package se.digg.eudiw.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageConfig;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.ResponseType;
 import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.id.ClientID;
@@ -25,9 +13,6 @@ import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import com.nimbusds.openid.connect.sdk.Nonce;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -37,31 +22,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import se.digg.eudiw.authentication.SwedenConnectPrincipal;
 import se.digg.eudiw.config.EudiwConfig;
 import se.digg.eudiw.config.SignerConfig;
+import se.digg.eudiw.model.CredentialOfferDeepLinkAndQrCode;
 import se.digg.eudiw.model.CredentialOfferFormParam;
 import se.digg.eudiw.model.credentialissuer.CredentialOfferParam;
 import se.digg.eudiw.model.credentialissuer.GrantType;
 import se.digg.eudiw.model.credentialissuer.AuthorizationCodeGrant;
-import se.digg.eudiw.model.credentialissuer.TxCodeType;
-import se.digg.eudiw.model.credentialissuer.TxCodeInputMode;
-import se.digg.eudiw.model.credentialissuer.PendingPreAuthorization;
 import se.digg.eudiw.service.CredentialOfferService;
 import se.digg.eudiw.service.MetadataService;
 import se.digg.eudiw.util.IssuerStateBuilder;
+import se.digg.eudiw.util.JwtIdUtil;
 import se.oidc.oidfed.md.wallet.credentialissuer.AbstractCredentialConfiguration;
 import se.oidc.oidfed.md.wallet.credentialissuer.Display;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateEncodingException;
 import java.text.ParseException;
 import java.util.*;
@@ -73,8 +52,9 @@ public class PrepareCredentialOfferController {
 
     private final CredentialOfferService credentialOfferService;
     private final SignerConfig signer;
+  private final JwtIdUtil jwtIdUtil;
 
-    final URI authzEndpoint;
+  final URI authzEndpoint;
     final URI tokenEndpoint;
     private final EudiwConfig eudiwConfig;
     private final PkiCredential issuerCredential;
@@ -83,14 +63,15 @@ public class PrepareCredentialOfferController {
     Nonce nonce = new Nonce(); // move to request
     Random rnd;
 
-    public PrepareCredentialOfferController(EudiwConfig eudiwConfig, CredentialBundles credentialBundles, MetadataService metadataService, CredentialOfferService credentialOfferService, SignerConfig signer) {
+    public PrepareCredentialOfferController(EudiwConfig eudiwConfig, CredentialBundles credentialBundles, MetadataService metadataService, CredentialOfferService credentialOfferService, SignerConfig signer, JwtIdUtil jwtIdUtil) {
         this.eudiwConfig = eudiwConfig;
 
         issuerCredential = credentialBundles.getCredential("issuercredential");
         authzEndpoint = URI.create(String.format("%s/oauth2/authorize", eudiwConfig.getIssuerBaseUrl()));
         tokenEndpoint = URI.create(String.format("%s/oauth2/token", eudiwConfig.getIssuerBaseUrl()));
         this.signer = signer;
-        rnd = new Random();
+      this.jwtIdUtil = jwtIdUtil;
+      rnd = new Random();
 
         try {
             credentialsSupported = metadataService.metadata().getCredentialConfigurationsSupported();
@@ -109,22 +90,10 @@ public class PrepareCredentialOfferController {
                 return new ModelAndView("redirect:/prepare-credential-offer");
             }
 
-            String credentialUrl = String.format("%s/credential_offer/%s", eudiwConfig.getIssuerBaseUrl(), credentialOfferId);
-            String credOffer = String.format("openid-credential-offer://credential_offer?credential_offer_uri=%s", URLEncoder.encode(credentialUrl, StandardCharsets.UTF_8));
-            logger.info("Creating QR code for credential offer: {}", credOffer);
-            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+          CredentialOfferDeepLinkAndQrCode offer = credentialOfferService.credentialOfferDeepLinkAndQrCode(credentialOfferId);
 
-            BitMatrix bitMatrix = qrCodeWriter.encode(credOffer, BarcodeFormat.QR_CODE, 300, 300);
-
-            ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
-            MatrixToImageConfig con = new MatrixToImageConfig();
-
-            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream,con);
-            byte[] pngData = pngOutputStream.toByteArray();
-            String qrCode = Base64.getEncoder().encodeToString(pngData);
-
-            model.addAttribute("qrCode", String.format("data:image/jpeg;base64, %s", qrCode));
-            model.addAttribute("linkUrl", credOffer);
+            model.addAttribute("qrCode", String.format("data:image/jpeg;base64, %s", offer.qrCodeBase64()));
+            model.addAttribute("linkUrl", offer.deepLinkUrl());
 
             return new ModelAndView("credential-offer", model.asMap());
         } catch (WriterException | IOException e) {
@@ -193,7 +162,8 @@ public class PrepareCredentialOfferController {
     }
 
     @GetMapping("/pre-auth-credential-offer")
-    public ModelAndView initPreAuthPid(@ModelAttribute("credentialOffer") CredentialOfferFormParam credentialOffer, @ModelAttribute("codeVerifier") CodeVerifier pkceVerifier, @RequestParam("code") Optional<String> codeParam, @RequestParam("state") Optional<String> state, Model model, RedirectAttributes redirectAttributes) throws URISyntaxException, JOSEException, ParseException {
+    public ModelAndView initPreAuthPid(@ModelAttribute("credentialOffer") CredentialOfferFormParam credentialOffer, @ModelAttribute("codeVerifier") CodeVerifier pkceVerifier, @RequestParam("code") Optional<String> codeParam, @RequestParam("state") Optional<String> state, Model model, RedirectAttributes redirectAttributes)
+        throws URISyntaxException, JOSEException, ParseException, IOException, WriterException {
 
         URI callbackUri = URI.create(String.format("%s/pre-auth-credential-offer", eudiwConfig.getIssuerBaseUrl()));
 
@@ -201,7 +171,7 @@ public class PrepareCredentialOfferController {
             String credentialOfferFormId = UUID.randomUUID().toString();
 
             // Generate new random string to link the callback to the authZ request
-            State newState = new State(id2jwt(credentialOfferFormId));
+            State newState = new State(jwtIdUtil.id2jwt(credentialOfferFormId));
             Scope scope = new Scope();
             credentialOffer.getSelectedCredentials().forEach(cred -> {
                 String newScope = credentialsSupported.get(cred).getScope();
@@ -233,104 +203,14 @@ public class PrepareCredentialOfferController {
             return new ModelAndView(String.format("redirect:%s", redirectUri), modelMap);
         }
 
-        logger.info("code: {}", codeParam);
-        String credentialOfferFormId = jwt2id(state.get());
-        List<String> selectedCredentials = credentialOfferService.selectedCredentials(credentialOfferFormId);
-        AuthorizationCode code = new AuthorizationCode(codeParam.get());
-        AuthorizationGrant codeGrant = new PreAuthCodeAuthorizationGrant(code, callbackUri, pkceVerifier);
-
-        logger.info("codeGrant: {}", codeGrant.toParameters());
-
-        ClientID clientID = new ClientID(eudiwConfig.getClientId());
-
-        CredentialOfferParam credentialOfferParam = new CredentialOfferParam(eudiwConfig.getIssuer(), selectedCredentials);
-        credentialOfferParam.setGrants(Map.of(se.digg.eudiw.model.credentialissuer.GrantType.PRE_AUTHORIZED_CODE, new se.digg.eudiw.model.credentialissuer.PreAuthorizationCodeGrant(codeParam.get(), eudiwConfig.getAuthHost(), new TxCodeType(TxCodeInputMode.NUMERIC, 6, "PIN"))));
-
-        SecurityContext context = SecurityContextHolder.getContext();
-        Authentication authentication = context.getAuthentication();
-        SwedenConnectPrincipal swedenConnectPrincipal = null;
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof SwedenConnectPrincipal) {
-            swedenConnectPrincipal = (SwedenConnectPrincipal) principal;
-        }
-
-        if (swedenConnectPrincipal == null) {
-            throw new RuntimeException("TODO handle not authenticated");
-        }
-
-        int number = rnd.nextInt(999999);
-
-        String txCode = String.format("%06d", number);
-        PendingPreAuthorization pendingPreAuthorization = new PendingPreAuthorization(credentialOfferParam, callbackUri.toString(), pkceVerifier, clientID.getValue(), txCode, swedenConnectPrincipal);
-        credentialOfferService.store(code.getValue(), pendingPreAuthorization);
-
-        logger.info("Pending Credential offer: {}", pendingPreAuthorization);
-
-        String credentialOfferId = UUID.randomUUID().toString();
-        credentialOfferService.store(credentialOfferId, credentialOfferParam);
+        String credentialOfferId = credentialOfferService.createCredentialOffer(pkceVerifier, codeParam.get(), state.get(), callbackUri);
         redirectAttributes.addFlashAttribute("credentialOfferId", credentialOfferId);
 
         return new ModelAndView("redirect:/credential_offer");
     }
 
+
     private Display getDisplay(AbstractCredentialConfiguration credentialConfiguration, String locale) {
         return credentialConfiguration.getDisplay().stream().filter(d -> d.getLocale().equals(locale)).findFirst().orElse(credentialConfiguration.getDisplay().get(0));
     }
-
-    protected static class PreAuthCodeAuthorizationGrant extends AuthorizationGrant {
-        private final AuthorizationCode code;
-        private final URI redirectURI;
-        private final CodeVerifier pkceVerifier;
-        private static final com.nimbusds.oauth2.sdk.GrantType GRANT_TYPE = new com.nimbusds.oauth2.sdk.GrantType("urn:ietf:params:oauth:grant-type:pre-authorized_code");
-
-        PreAuthCodeAuthorizationGrant(AuthorizationCode code, URI redirectURI, CodeVerifier pkceVerifier) {
-            super(GRANT_TYPE);
-            this.code = code;
-            this.redirectURI = redirectURI;
-            this.pkceVerifier = pkceVerifier;
-        }
-
-        @Override
-        public Map<String, List<String>> toParameters() {
-            Map<String, List<String>> params = new LinkedHashMap();
-            params.put("grant_type", Collections.singletonList(GRANT_TYPE.getValue()));
-            params.put("pre-authorized_code", Collections.singletonList(this.code.getValue()));
-            params.put("code", Collections.singletonList(this.code.getValue()));
-            if (this.redirectURI != null) {
-                params.put("redirect_uri", Collections.singletonList(this.redirectURI.toString()));
-                params.put("code_verifier", List.of(pkceVerifier.getValue()));
-            }
-
-            return params;
-        }
-    }
-
-    private String id2jwt(String id) throws JOSEException {
-        logger.info("id2jwt: {}", id);
-        JWSAlgorithm algorithm = JWSAlgorithm.ES256;
-        Date now = new Date();
-        Calendar issCalendar = Calendar.getInstance();
-        issCalendar.setTime(now);
-        Calendar expCalendar = Calendar.getInstance();
-        expCalendar.setTime(issCalendar.getTime());
-        expCalendar.add(Calendar.MINUTE, 10); // todo config
-
-        JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder();
-        claimsSetBuilder.issuer(eudiwConfig.getIssuer()).subject(eudiwConfig.getIssuer()).claim("id", id).jwtID(new BigInteger(128, rnd).toString(16)).expirationTime(expCalendar.getTime()).issueTime(issCalendar.getTime());
-        SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(algorithm).keyID(signer.getPublicJwk().getKeyID()).type(JOSEObjectType.JWT).build(), claimsSetBuilder.build());
-        jwt.sign(signer.getSigner());
-
-        return jwt.serialize();
-    }
-
-    private String jwt2id(String jwt) throws JOSEException, ParseException {
-        logger.info("jwt2id: {}", jwt);
-        SignedJWT signedJWT = SignedJWT.parse(jwt);
-        if (!signedJWT.verify(signer.getJwsVerifier())) {
-            throw new JOSEException("Signature verification failed");
-        }
-        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-        return claimsSet.getStringClaim("id");
-    }
-
 }

@@ -23,6 +23,8 @@ public class EudiwConfig {
     public record EwcItbConfig(String idp) {
     }
 
+    public record HttpProxyConfig(String host, int port, String noProxy) {}
+
     public record ServerBaseConfig(String host, int port, String scheme, String contextPath) {
 
         public String baseUrl() {
@@ -67,6 +69,8 @@ public class EudiwConfig {
     private ValKeyConfig valkey;
 
     private EwcItbConfig ewcItb;
+
+    private HttpProxyConfig httpProxy;
 
     public String getAuthHost() {
         return authHost;
@@ -195,6 +199,14 @@ public class EudiwConfig {
 
     public void setIdProxyFrontend(ServerBaseConfig idProxyFrontend) {
         this.idProxyFrontend = idProxyFrontend;
+    }
+
+    public HttpProxyConfig getHttpProxy() {
+      return httpProxy;
+    }
+
+    public void setHttpProxy(HttpProxyConfig httpProxy) {
+      this.httpProxy = httpProxy;
     }
 
     public ServerBaseConfig getReferenceIdp() {

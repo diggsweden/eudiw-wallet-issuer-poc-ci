@@ -51,6 +51,7 @@ public class EwcItbService {
 
   private static final Logger logger = LoggerFactory.getLogger(EwcItbService.class);
   private final EudiwConfig eudiwConfig;
+  private final RestClient.Builder restClientBuilder;
   private final MetadataService metadataService;
   private final CredentialOfferService credentialOfferService;
   private final JwtIdUtil jwtIdUtil;
@@ -58,9 +59,10 @@ public class EwcItbService {
   Nonce nonce = new Nonce(); // move to request
   CodeVerifier pkceVerifier = new CodeVerifier(); // move to request
 
-  public EwcItbService(EudiwConfig eudiwConfig, MetadataService metadataService,
+  public EwcItbService(EudiwConfig eudiwConfig, RestClient.Builder restClientBuilder, MetadataService metadataService,
       CredentialOfferService credentialOfferService, JwtIdUtil jwtIdUtil) {
     this.eudiwConfig = eudiwConfig;
+    this.restClientBuilder = restClientBuilder;
     this.metadataService = metadataService;
     this.credentialOfferService = credentialOfferService;
     this.jwtIdUtil = jwtIdUtil;
@@ -113,8 +115,7 @@ public class EwcItbService {
     requestedScopes.forEach(scope::add);
     scope.add("openid");
 
-    RestClient client = RestClient
-        .builder()
+    RestClient client = restClientBuilder
         .baseUrl(eudiwConfig.getCredentialHost())
         .build();
 

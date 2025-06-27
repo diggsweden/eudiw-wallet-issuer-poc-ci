@@ -44,7 +44,7 @@ public class RestClientConfig {
     }
 
     HttpClientBuilder httpClientBuilder = HttpClients.custom()
-        .setDefaultRequestConfig(requestConfigBuilder.setRedirectsEnabled(false).build()).disableRedirectHandling();
+        .setDefaultRequestConfig(requestConfigBuilder.setRedirectsEnabled(false).build()).disableRedirectHandling().disableCookieManagement();
 
     if (!proxyUsername.isEmpty()) {
       BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();

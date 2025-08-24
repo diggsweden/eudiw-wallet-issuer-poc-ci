@@ -15,3 +15,4 @@ policies:
       conventional:
         types: ["chore", "docs","ci","perf", "refactor", "style", "test", "release"]
         scopes: [".*"]
+        descriptionLength: 92

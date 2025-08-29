@@ -3,24 +3,28 @@ package se.digg.eudiw.model.credentialissuer;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CredentialResponse {
     private String credential;
+    private List<Credential> credentials;
     private String cNonce;
     private String cNonceExpiresIn;
 
     public CredentialResponse() {
-
+        credentials = new ArrayList<>();
     }
 
     public CredentialResponse(String credential) {
         this.credential = credential;
+        this.credentials = List.of(new Credential(credential));
     }
 
     public CredentialResponse(String credential, String cNonce, String cNonceExpiresIn) {
-        this.credential = credential;
+        this.credentials = List.of(new Credential(credential));
         this.cNonce = cNonce;
         this.cNonceExpiresIn = cNonceExpiresIn;
     }
@@ -31,6 +35,14 @@ public class CredentialResponse {
 
     public void setCredential(String credential) {
         this.credential = credential;
+    }
+
+    public List<Credential> getCredentials() {
+        return credentials;
+    }
+
+    public void setCredentials(List<Credential> credentials) {
+        this.credentials = credentials;
     }
 
     public String getcNonce() {
@@ -51,23 +63,24 @@ public class CredentialResponse {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        CredentialResponse that = (CredentialResponse) o;
-        return Objects.equals(credential, that.credential) && Objects.equals(cNonce, that.cNonce) && Objects.equals(cNonceExpiresIn, that.cNonceExpiresIn);
+        if (!(o instanceof CredentialResponse that))
+            return false;
+      return Objects.equals(credentials, that.credentials) && Objects.equals(cNonce,
+            that.cNonce) && Objects.equals(cNonceExpiresIn, that.cNonceExpiresIn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(credential, cNonce, cNonceExpiresIn);
+        return Objects.hash(credentials, cNonce, cNonceExpiresIn);
     }
 
     @Override
     public String toString() {
         return "CredentialResponse{" +
-                "credential='" + credential + '\'' +
-                ", cNonce='" + cNonce + '\'' +
-                ", cNonceExpiresIn='" + cNonceExpiresIn + '\'' +
-                '}';
+            "credentials=" + credentials +
+            ", cNonce='" + cNonce + '\'' +
+            ", cNonceExpiresIn='" + cNonceExpiresIn + '\'' +
+            '}';
     }
 }
 

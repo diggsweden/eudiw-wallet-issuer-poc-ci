@@ -1,10 +1,12 @@
 package se.digg.eudiw.controllers;
 
+import java.security.cert.CertificateEncodingException;
 import java.text.ParseException;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
@@ -39,8 +41,12 @@ import se.digg.eudiw.model.credentialissuer.JwtProof;
 import se.digg.eudiw.service.CredentialIssuerService;
 import se.digg.eudiw.service.CredentialOfferService;
 import se.digg.eudiw.service.DummyProofService;
+import se.digg.eudiw.service.MetadataService;
 import se.digg.eudiw.service.OpenIdFederationService;
 import se.digg.wallet.datatypes.common.TokenIssuingException;
+import se.oidc.oidfed.md.wallet.credentialissuer.AbstractCredentialConfiguration;
+import se.oidc.oidfed.md.wallet.credentialissuer.CredentialIssuerMetadata;
+import se.oidc.oidfed.md.wallet.credentialissuer.SdJwtCredentialConfiguration;
 
 @RestController
 public class CredentialController {
@@ -51,16 +57,19 @@ public class CredentialController {
     private final ProofDecoder proofDecoder;
     private final CredentialIssuerService credentialIssuerService;
     private final CredentialOfferService credentialOfferService;
+    private final MetadataService metadataService;
     private final DummyProofService dummyProofService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    public CredentialController(@Autowired OpenIdFederationService openIdFederationService, @Autowired ProofDecoder proofDecoder, @Autowired CredentialIssuerService credentialIssuerService, @Autowired CredentialOfferService credentialOfferService, DummyProofService dummyProofService) {
+    public CredentialController(@Autowired OpenIdFederationService openIdFederationService, @Autowired ProofDecoder proofDecoder, @Autowired CredentialIssuerService credentialIssuerService, @Autowired CredentialOfferService credentialOfferService,
+        MetadataService metadataService, DummyProofService dummyProofService) {
         this.openIdFederationService = openIdFederationService;
         this.proofDecoder = proofDecoder;
         this.credentialIssuerService = credentialIssuerService;
         this.credentialOfferService = credentialOfferService;
-        this.dummyProofService = dummyProofService;
+      this.metadataService = metadataService;
+      this.dummyProofService = dummyProofService;
     }
 
     @GetMapping("/demo-oidfed-client")
@@ -135,14 +144,38 @@ public class CredentialController {
 
                 if (proofJwk.isEmpty()) throw new TokenIssuingException("Missing valid proof");
 
-                return new CredentialResponse(
+              CredentialIssuerMetadata metadata = null;
+              try {
+                metadata = metadataService.metadata();
+              } catch (CertificateEncodingException | JOSEException | JsonProcessingException e) {
+                  logger.error("Missing metadata configuration", e);
+                  throw new ResponseStatusException(
+                      HttpStatus.INTERNAL_SERVER_ERROR, "Missing metadata configuration");              }
+              AbstractCredentialConfiguration config = metadata.getCredentialConfigurationsSupported().get(credential.getCredentialConfigurationId());
+                if (config == null) {
+                    throw new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Credential Configuration Not Found");
+                }
+                if (config instanceof SdJwtCredentialConfiguration sdJwtConfig) {
+                  return new CredentialResponse(
                         credentialIssuerService.credential(
-                                credential.getFormat(),
-                                credential.getVct(),
-                                proofJwk.get(),
-                                jwt
+                            credential.getFormat(),
+                            sdJwtConfig.getVct(),
+                            proofJwk.get(),
+                            jwt
                         )
+                    );
+                }
+                return new CredentialResponse(
+                    credentialIssuerService.credential(
+                        credential.getFormat(),
+                        null,
+                        proofJwk.get(),
+                        jwt
+                    )
                 );
+
+
             }
         }
         //catch (ParseException parseException) {

@@ -85,7 +85,7 @@ public class EwcItbController {
   ModelAndView qr(Model model) {
     String sessionId = UUID.randomUUID().toString();
     List<String> credentialType =
-        List.of("eu.europa.ec.eudi.pid_jwt_vc_json", "eu.europa.ec.eudi.pid_mdoc");
+        List.of("eu.europa.ec.eudi.pid_vc_sd_jwt", "eu.europa.ec.eudi.pid_mdoc");
     return qrModelAndView(model, sessionId, credentialType);
   }
 
@@ -93,7 +93,7 @@ public class EwcItbController {
   ModelAndView qrSdJwtVc(Model model) {
     String sessionId = UUID.randomUUID().toString();
     List<String> credentialType =
-        List.of("eu.europa.ec.eudi.pid_jwt_vc_json");
+        List.of("eu.europa.ec.eudi.pid_vc_sd_jwt");
     return qrModelAndView(model, sessionId, credentialType);
   }
 

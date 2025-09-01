@@ -247,7 +247,7 @@ public class MetadataServiceImpl implements MetadataService {
                                         .locale("de")
                                         .build()
                         ))
-                        .vct("urn:eu.europa.ec.eudi:pid:1")
+                        .vct("urn:eudi:pid:1")
                         .claim(Claim.builder()
                                 .path(List.of("given_name"))
                                 .mandatory(true)

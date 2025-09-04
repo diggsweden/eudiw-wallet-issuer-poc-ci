@@ -424,6 +424,20 @@ public class MetadataServiceImpl implements MetadataService {
                                                 .build()
                                 ))
                                 .build())
+                        .claim(Claim.builder()
+                            .path(List.of("personal_administrative_number"))
+                            .mandatory(false)
+                            .display(List.of(
+                                Display.builder()
+                                    .name("Swedish Personal Number")
+                                    .locale("en")
+                                    .build(),
+                                Display.builder()
+                                    .name("Svenskt personnummer")
+                                    .locale("sv")
+                                    .build()
+                            ))
+                            .build())
 
                         //.order(List.of("given_name","last_name"))
                         .build()

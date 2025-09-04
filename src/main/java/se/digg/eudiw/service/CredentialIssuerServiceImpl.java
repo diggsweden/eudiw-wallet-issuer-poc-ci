@@ -82,6 +82,12 @@ public class CredentialIssuerServiceImpl implements CredentialIssuerService {
                             .value(birthDate).build()
             );
 
+            tokenAttributes.add(
+                TokenAttribute.builder().type(
+                        new TokenAttributeType("personal_administrative_number"))
+                    .value(jwt.getClaim("personalNumber")).build()
+            );
+
             try {
                 int ageInYears = ageInYears(birthDate);
                 tokenAttributes.addAll(

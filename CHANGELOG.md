@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.20] - 2025-09-08
+
+### Added
+
+- Add optional personal_administrative_number to sdjwt pid
+- Add support for credential_configuration_id parameter in credential endpoint
+- Add support for list of credentials in credential end-point
+- Add versionnumbers to gh actions
+- Add versionnumbers to gh actions
+- Add versionnumbers to gh actions
+- Add proxy config for rest client
+- Add ewc itb issuer endpoints
+- Add link to tokenlib at frontpage
+- Add par metadata
+
+### Changed
+
+- Update vct and type to latest specification
+- Update dependency org.jreleaser:jreleaser-maven-plugin to v1.20.0 (#164)
+- Update to follow Draft 15 of OID4VCI (#150)
+- Update dependency org.openapitools:openapi-generator-maven-plugin to v7.15.0 (#159)
+- Update github actions
+- Update github actions to v5 (major)
+- Extend descriptionlength for commitlint
+- Update maven-plugins (#144)
+- Update dependency org.jreleaser:jreleaser-maven-plugin to v1.19.0 (#142)
+- Disable ewc itb automatic cookie management for rest client
+- Skip consent page for pid issuance
+- Update docker/build-push-action digest to 1dc7386 (#123)
+- Update cgr.dev/chainguard/jre:latest docker digest to c4e0225 (#109)
+
+### Fixed
+
+- Update dependency org.springdoc:springdoc-openapi-starter-webmvc-ui to v2.8.13 (#172)
+- Update dependency com.nimbusds:nimbus-jose-jwt to v10.5 (#171)
+- Update dependency org.projectlombok:lombok to v1.18.40 (#170)
+- Update dependency io.lettuce:lettuce-core to v6.8.1.release (#168)
+- Update dependency org.springdoc:springdoc-openapi-starter-webmvc-ui to v2.8.12 (#167)
+- Update dependency com.nimbusds:oauth2-oidc-sdk to v11.28 (#163)
+- Update java non-major (#162)
+- Update dependency org.jsoup:jsoup to v1.21.2 (#160)
+- Update spring non-major (#157)
+- Update spring non-major (#137)
+- Update nimbusds (#156)
+- Update dependency io.projectreactor:reactor-core to v3.7.9 (#155)
+- Update dependency io.lettuce:lettuce-core to v6.8.0.release (#153)
+- Update dependency com.nimbusds:nimbus-jose-jwt to v10.4.1 (#152)
+- Update dependency com.nimbusds:oauth2-oidc-sdk to v11.27 (#151)
+- Update dependency com.nimbusds:oauth2-oidc-sdk to v11.26.1 (#149)
+- Update dependency com.nimbusds:nimbus-jose-jwt to v10.4 (#148)
+- Update dependency commons-io:commons-io to v2.20.0 (#147)
+- Update java non-major to v2.19.2 (#146)
+- Update dependency io.projectreactor:reactor-core to v3.7.8 (#145)
+- Update dependency com.nimbusds:nimbus-jose-jwt to v10.3.1 (#143)
+- Update java non-major (#138)
+- Update dependency com.nimbusds:oauth2-oidc-sdk to v11.26 (#136)
+- Update java non-major to v2.19.1 (#135)
+- Update dependency io.projectreactor:reactor-core to v3.7.7 (#134)
+- Update spring non-major (#130)
+- Update java non-major (#133)
+- Update dependency io.lettuce:lettuce-core to v6.7.0.release (#132)
+- Update dependency com.nimbusds:oauth2-oidc-sdk to v11.25 (#129)
+
 ## [0.0.19] - 2025-05-19
 
 ### Changed
@@ -15,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update dependency io.projectreactor:reactor-core to v3.7.6 (#122)
 - Update nimbusds (#112)
+
 
 ## [0.0.18] - 2025-05-09
 
@@ -253,7 +317,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update plugin org.openapi.generator to v7.10.0
 - Refactor, clean up, fix deprecated warnings
 - Expose public jwk on endpoint and include kid in jwk
-- Change configured host in dev profile to <https://local.dev.swedenconnect.se:8443>
+- Change configured host in dev profile to https://local.dev.swedenconnect.se:8443
 
 ### Fixed
 
@@ -278,6 +342,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update zxing to v3.5.3
 - Update spring non-major
 
+[0.0.20]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.19..v0.0.20
 [0.0.19]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.18..v0.0.19
 [0.0.18]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.17..v0.0.18
 [0.0.17]: https://github.com/diggsweden/eudiw-wallet-issuer-poc/compare/v0.0.15..v0.0.17

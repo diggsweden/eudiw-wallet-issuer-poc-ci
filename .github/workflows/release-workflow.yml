@@ -13,31 +13,42 @@ permissions:
   contents: read
 
 jobs:
-  version-bump:
-    secrets: inherit
-    permissions:
-      contents: write
-      packages: read
-    uses: diggsweden/.github/.github/workflows/version-bump-changelog.yml@main
-    with:
-      updatePom: true
-      file_pattern: pom.xml CHANGELOG.md
-  
-  publish:
-    needs: [version-bump]
-    permissions:
-      contents: read
-      packages: write
-      id-token: write  # Required for SLSA provenance
-      actions: read   # Required for SLSA provenance v2
-    uses: ./.github/workflows/release-publish.yml
-  
   release:
-    needs: [publish]
     permissions:
       contents: write
       packages: write
       id-token: write
-    secrets:
-      inherit
-    uses: ./.github/workflows/release.yml
+      actions: read   # Required for SLSA provenance v2
+      security-events: write
+    secrets: inherit
+    uses: diggsweden/.github/.github/workflows/release-orchestrator.yml@feat/ci-refactor
+    with:
+      # Project configuration
+      projectType: maven
+      releaseType: stable
+      
+      # Version and changelog - same as before
+      skipVersionBump: false
+      changelogConfig: ".github-templates/gitcliff-templates/keepachangelog.toml"
+      
+      # Maven publishing - preserving existing behavior
+      skipArtifactPublish: false
+      artifactRegistry: github
+      
+      # Container image - preserving all existing features
+      skipContainerPublish: false
+      containerRegistry: ghcr.io
+      containerPlatforms: "linux/amd64,linux/arm64"
+      containerEnableSLSA: true  # Preserving SLSA provenance
+      containerfile: Containerfile
+      
+      # GitHub Release - using JReleaser to preserve existing setup
+      skipGitHubRelease: false
+      useJReleaser: true  # Preserving JReleaser functionality
+      jreleaserConfig: jreleaser.yml
+      generateSBOM: true  # Already configured in jreleaser.yml
+      signArtifacts: true  # Already using GPG signing
+      attachArtifacts: "target/*.jar"
+      
+      # Java configuration
+      javaVersion: "21"

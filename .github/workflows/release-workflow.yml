@@ -20,6 +20,7 @@ jobs:
       id-token: write
       actions: read   # Required for SLSA provenance v2
       security-events: write
+      attestations: write  # Required for SBOM attestation
     secrets: inherit
     uses: diggsweden/.github/.github/workflows/release-orchestrator.yml@feat/ci-refactor
     with:

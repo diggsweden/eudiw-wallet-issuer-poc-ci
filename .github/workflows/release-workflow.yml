@@ -15,7 +15,7 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+-SNAPSHOT*"    # Snapshot: v1.0.0-SNAPSHOT
 
 permissions:
-  contents: read  # Default permission for workflow
+  contents: read  # Best Security practice. Jobs only get read as base, and then permissions are added as needed
 
 jobs:
   release:

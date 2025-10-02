@@ -19,7 +19,6 @@ release:
     overwrite: true     # Allows updating existing releases
     draft: false        # Creates as final release, not draft
     sign: true          # Signs release assets
-    branch: main
     changelog:
       external: ReleasenotesTmp
 

@@ -5,6 +5,6 @@
   [![Tag](https://img.shields.io/github/v/tag/diggsweden/eudiw-wallet-issuer-poc?style=for-the-badge&color=yellow)](https://github.com/diggsweden/eudiw-wallet-issuer-poc/tags)
 
 
-dThis a PoC test library, and is currently under development. It should not be used by a third party in the current state. This might change in the future, but for now - consider this repository a Friday afternoon hack!
+idddThis a PoC test library, and is currently under development. It should not be used by a third party in the current state. This might change in the future, but for now - consider this repository a Friday afternoon hack!
 
 [Development](./docs/DEVELOPMENT.md)

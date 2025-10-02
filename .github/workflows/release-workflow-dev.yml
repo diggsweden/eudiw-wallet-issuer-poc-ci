@@ -1,0 +1,27 @@
+# Dev Release Workflow
+# 
+# This workflow triggers the dev release orchestrator for development and feature branches.
+# It creates dev-tagged artifacts and container images for testing.
+#
+# Triggers:
+# - Push to dev/* or feat/* branches  
+# - Manual workflow dispatch
+#
+# Created artifacts:
+# - Maven/NPM packages with -dev versions (e.g., 1.2.4-dev.1)
+# - Container images with dev tags
+# - See release summary for full details
+
+name: Dev Release
+
+on:
+  push:
+    branches:
+      - 'dev/**'
+      - 'feat/**'
+  workflow_dispatch:
+
+jobs:
+  dev-release:
+    uses: diggsweden/.github/.github/workflows/release-dev-orchestrator.yml@feat/ci-refactor
+    secrets: inherit

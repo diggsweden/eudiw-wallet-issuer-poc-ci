@@ -23,5 +23,10 @@ on:
 
 jobs:
   dev-release:
+    permissions:
+      contents: write         # Read code and create version bump commits
+      packages: write         # Push dev images to ghcr.io
     uses: diggsweden/.github/.github/workflows/release-dev-orchestrator.yml@feat/ci-refactor
+    with:
+      projectType: maven
     secrets: inherit

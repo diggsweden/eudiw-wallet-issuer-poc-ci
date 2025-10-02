@@ -467,6 +467,7 @@
       </plugins>
   </build>
 
+  </repositories>
   <repository>
     <name>Central Portal Snapshots</name>
     <id>central-portal-snapshots</id>

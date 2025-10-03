@@ -23,9 +23,9 @@ release:
       external: ReleasenotesTmp
 
 checksum:
+  name: 'checksums.sha256'
   algorithms:
     - SHA-256
-    - SHA-512
 
 
 # GPG signing configuration

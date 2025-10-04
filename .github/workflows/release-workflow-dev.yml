@@ -12,7 +12,7 @@
 # - Container images with dev tags
 # - See release summary for full details
 
-name: Dev Release
+name: Release Workflow Dev
 
 on:
   push:

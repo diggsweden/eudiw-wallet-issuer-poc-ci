@@ -43,5 +43,4 @@ jobs:
       changelogCreator: git-cliff  # Generate changelog from conventional commits
       
       # Release publisher configuration
-      releasePublisher: github-cli  # Creates GitHub release with changelog and artifacts
-      # Uses jreleaser.yml config, handles SBOM generation and GPG signing
+      releasePublisher: jreleaser  # Creates GitHub release with changelog and artifacts
